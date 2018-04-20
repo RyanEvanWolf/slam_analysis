@@ -4,11 +4,12 @@ import rospy
 import cv2
 import time
 
+from dataset.utils import Directories
 from front_end.utils import *
 from front_end.srv import *
 from front_end.msg import frameDetection,ProcTime,kPoint
 
-from slam_analysis.features import plotFeatures,getBestSettings,getFeatureSummary
+from front_end.features import plotFeatures,getBestSettings,getFeatureSummary
 
 from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
@@ -17,14 +18,18 @@ import pickle
 import argparse
 cvb=CvBridge() 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("feature_pickle_dir")
-parser.add_argument("--prefix",default="",type=str)
+
+parser =argparse.ArgumentParser()
+parser.add_argument("rootDir")
+parser.add_argument("loopID")
+parser.add_argument("detector")
 args=parser.parse_args()
 
+projectFolder=Directories(args.rootDir)
+pickleDir=projectFolder.getFeaturePickle(args.loopID,args.detector)
 
-print("loading Data from "+args.feature_pickle_dir)
-inputPickle=open(args.feature_pickle_dir,"rb")
+print("loading Data from "+pickleDir)
+inputPickle=open(pickleDir,"rb")
 dataIn=pickle.load(inputPickle)
 inputPickle.close()
 print("Data Loaded")
@@ -40,10 +45,6 @@ outputSettings["operatingCurves"]=sett
 print(len(sett["Maximum"]))
 print(len(sett.keys()))
 print(sett["Maximum"])
-
-outputFileName=args.feature_pickle_dir[:args.feature_pickle_dir.rfind("/")+1]+"operatingCurves.p"
-print(outputFileName)
-pickle.dump(outputSettings,open(outputFileName,"w"))
 sty.use("seaborn")
 ###plot left number of features statistics
 
@@ -76,25 +77,4 @@ ax2.set_xlabel("Frame Number")
 
 ax2.legend()
 
-
-
-
-# fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True)
-# for i in range(6):
-#     ax1.plot(getAsList(bestSettings[i],1)[0], getAsList(bestSettings[i],1)[1], mew=0.1, marker='o', c=np.random.rand(3,))
-
-
-# for i in range(6):
-#     ax2.plot(getAsList(bestSettings[i],2)[0], getAsList(bestSettings[i],2)[1], mew=0.1, marker='o', c=np.random.rand(3,))
-
-# ax2.set_ylim(ymin=0.0)
-# ax2.set_ylabel("Processing Time (ms)")
-# plt.show()
-
-
-
-# for b in OperatingCurves.keys():
-#     plt.plot(OperatingCurves[b],label=b)
-# print("Completed")
-# plt.legend()
 plt.show()
