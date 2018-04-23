@@ -26,7 +26,6 @@ from visualization_msgs.msg import Marker
 from std_msgs.msg import ColorRGBA
 
 import matplotlib as mpl
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 

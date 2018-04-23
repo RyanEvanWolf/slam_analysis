@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+#####ros related imports
+import rospy 
+import cv2
+import time 
+import numpy as np
+from threading import Thread
+import matplotlib.pyplot as plt
+
+
+from slam_analysis.display import display2D,viewingAxis
+
+global graph
+global graph2
+graph= display2D()
+graph2 =display2D()
+
+
+def up():
+    global graph
+    global graph2
+    while(True):
+        a=viewingAxis(np.random.rand(4,4))
+        graph.Q.put(a)
+        graph2.Q.put(viewingAxis(np.random.rand(4,4)))
+        time.sleep(1)
+t=Thread(target=up)
+t.daemon=True
+t.start()
+
+plt.show()
