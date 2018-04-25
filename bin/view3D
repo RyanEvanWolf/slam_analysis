@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+#####ros related imports
+import rospy 
+import cv2
+import time 
+import numpy as np
+from threading import Thread
+import matplotlib.pyplot as plt
+from tf.transformations import quaternion_from_euler,quaternion_matrix
+
+from math import pi
+
+from slam_analysis.display import display3D,displayAxis
+from slam_analysis.display import getUnitAxis
+from front_end.motion import createHomog
+
+
+
+
+
+
+
+# A=getUnitAxis()
+# Anew=np.dot(H1,A['Y'])
+# Anew2=np.dot(H2,A['Y'])
+global outGraph
+outGraph=display3D()
+
+qco=quaternion_from_euler(-pi/2.0,0.0,0)
+outGraph.coordTransform=quaternion_matrix(qco)
+
+# print(A)
+# print(Anew)
+# print(Anew2)
+
+# global graph
+# global graph2
+# graph= display3D()
+
+# def genStraighLine(total=10):
+#     tl=[]
+#     for i in range(0,total):
+#         t=np.zeros((3,1),np.float64)
+#         t[0,0]=-0.15*i
+#         t[1,0]=0.25*i
+#         t[2,0]=0.5*i
+
+#         tl.append(createHomog(T=t))
+#     return tl
+
+# def getPureRotation(total=10):
+#     rl=[]
+#     for i in range(0,total):
+#         q=quaternion_from_euler(0,0,2*pi*i/(float(total)))
+#         R=quaternion_matrix(q)
+#         rl.append(createHomog(R=R[0:3,0:3]))
+#     return rl
+
+
+
+
+# def makeFakeMotion():
+#     totalList=genStraighLine()+getPureRotation()
+#     return totalList
+
+
+def up():
+    global outGraph
+    unit=displayAxis()
+    outGraph.Q.put(("sensor",unit))
+    while(True):
+        print("AA")
+        for i in range(0,10):
+
+            q1=quaternion_from_euler(pi*i/(10*16.0),0,0,'szxy')#-pi*i/(10*16.0),pi*i/(10*16.0),"szxy")
+            A1=displayAxis()
+            A2=displayAxis()
+            t=np.zeros((3,1),dtype=np.float64)
+            t2=np.zeros((3,1),dtype=np.float64)
+            t[1,0]=0.05*i
+            A1.Pose=createHomog(quaternion_matrix(q1)[0:3,0:3],t)
+            #A1.Pose=H1
+            #A2=displayAxis()
+            #A2.Pose=H2
+            t2[0,0]=0.05*i
+            A2.Pose=createHomog(quaternion_matrix(q1)[0:3,0:3],t2)
+            
+            outGraph.Q.put(("left",A1))
+            outGraph.Q.put(("right",A2))
+            time.sleep(1)
+        ##outGraph.Q.put(("right",A2))
+        #time.sleep(1)
+        # homogList=makeFakeMotion()
+        # for h in homogList:
+        #     print(h)
+        #     Axis=viewingAxis(h)
+        #     graph.Q.put(Axis)
+        #time.sleep(1)
+t=Thread(target=up)
+t.daemon=True
+t.start()
+
+plt.show()

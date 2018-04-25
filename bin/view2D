@@ -6,24 +6,54 @@ import time
 import numpy as np
 from threading import Thread
 import matplotlib.pyplot as plt
+from tf.transformations import quaternion_from_euler,quaternion_matrix
 
+from math import pi
 
 from slam_analysis.display import display2D,viewingAxis
+
+from front_end.motion import createHomog
 
 global graph
 global graph2
 graph= display2D()
-graph2 =display2D()
+
+def genStraighLine(total=10):
+    tl=[]
+    for i in range(0,total):
+        t=np.zeros((3,1),np.float64)
+        t[0,0]=-0.15*i
+        t[1,0]=0.25*i
+        t[2,0]=0.5*i
+
+        tl.append(createHomog(T=t))
+    return tl
+
+def getPureRotation(total=10):
+    rl=[]
+    for i in range(0,total):
+        q=quaternion_from_euler(0,0,2*pi*i/(float(total)))
+        R=quaternion_matrix(q)
+        rl.append(createHomog(R=R[0:3,0:3]))
+    return rl
+
+
+
+
+def makeFakeMotion():
+    totalList=genStraighLine()+getPureRotation()
+    return totalList
 
 
 def up():
     global graph
-    global graph2
     while(True):
-        a=viewingAxis(np.random.rand(4,4))
-        graph.Q.put(a)
-        graph2.Q.put(viewingAxis(np.random.rand(4,4)))
-        time.sleep(1)
+        homogList=makeFakeMotion()
+        for h in homogList:
+            print(h)
+            Axis=viewingAxis(h)
+            graph.Q.put(Axis)
+            time.sleep(1)
 t=Thread(target=up)
 t.daemon=True
 t.start()
