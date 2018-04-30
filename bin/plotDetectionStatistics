@@ -9,7 +9,8 @@ from front_end.utils import *
 from front_end.srv import *
 from front_end.msg import frameDetection,ProcTime,kPoint
 
-from front_end.features import plotFeatures,getBestSettings,getFeatureSummary
+from front_end.analysis import featureDatabase
+#from front_end.features import plotFeatures,getBestSettings,getFeatureSummary
 
 from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
@@ -22,29 +23,20 @@ cvb=CvBridge()
 parser =argparse.ArgumentParser()
 parser.add_argument("rootDir")
 parser.add_argument("loopID")
-parser.add_argument("detector")
-args=parser.parse_args()
+parser.add_argument("--output_directory",default="/media/ryan/EXTRA/output")
+args,unknown=parser.parse_known_args()
 
-projectFolder=Directories(args.rootDir)
-pickleDir=projectFolder.getFeaturePickle(args.loopID,args.detector)
-
-print("loading Data from "+pickleDir)
-inputPickle=open(pickleDir,"rb")
-dataIn=pickle.load(inputPickle)
-inputPickle.close()
-print("Data Loaded")
-
-
-OperatingCurves=getFeatureSummary(dataIn)
-sett=getBestSettings(dataIn)
-outputSettings={}
-outputSettings["name"]=dataIn["detectorName"]
-outputSettings["operatingCurves"]=sett
-
+projectFolder=Directories(args.rootDir,args.output_directory) 
+pickleDir=projectFolder.getFeaturePickle(args.loopID)
+print("Loading from "+pickleDir)
+features=featureDatabase(pickleDir)
+print("completed Loading")
+sett,OperatingCurves=features.getOperatingCurves("SURF")
+print("complete")
 
 print(len(sett["Maximum"]))
 print(len(sett.keys()))
-print(sett["Maximum"])
+print(sett["Mean"])
 sty.use("seaborn")
 ###plot left number of features statistics
 

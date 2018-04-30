@@ -10,12 +10,21 @@ from tf.transformations import quaternion_from_euler,quaternion_matrix
 
 from math import pi
 
-from slam_analysis.display import display3D,displayAxis
-from slam_analysis.display import getUnitAxis
-from front_end.motion import createHomog
+from slam_analysis.display import display3D,displayAxis,display2D
+from slam_analysis.display import getUnitAxis,liveGraph
+from front_end.motion import createHomog,deserialHomography,getMotion
+
+from viso_extractor.stereo import getVisoFromBag,drawVisoEpi,getVisoEpiError
 
 
+import rosbag
+import argparse
 
+parser =argparse.ArgumentParser()
+parser.add_argument("bagDirectory")
+global args
+
+args,unknown=parser.parse_known_args()
 
 
 
@@ -24,10 +33,19 @@ from front_end.motion import createHomog
 # Anew=np.dot(H1,A['Y'])
 # Anew2=np.dot(H2,A['Y'])
 global outGraph
-outGraph=display3D()
+global visoGraph
+#global out2
+#outGraph=display3D()
+outGraph=display2D()
+visoGraph=liveGraph("a")
+
 
 qco=quaternion_from_euler(-pi/2.0,0.0,0)
 outGraph.coordTransform=quaternion_matrix(qco)
+
+
+
+#out2.coordTransform=quaternion_matrix(qco)
 
 # print(A)
 # print(Anew)
@@ -62,40 +80,64 @@ outGraph.coordTransform=quaternion_matrix(qco)
 # def makeFakeMotion():
 #     totalList=genStraighLine()+getPureRotation()
 #     return totalList
-
+def getLists(mot):
+    r=[]
+    p=[]
+    y=[]
+    x=[]
+    yy=[]
+    z=[]
+    for i in mot:
+        r.append[i["Roll"]]
+        p.append[i["Pitch"]]
+        y.append[i["Yaw"]]
+        x.append[i["X"]]
+        yy.append[i["Y"]]
+        z.append[i["Z"]]
+    return r,p,y,x,yy,z
 
 def up():
     global outGraph
-    unit=displayAxis()
-    outGraph.Q.put(("sensor",unit))
-    while(True):
-        print("AA")
-        for i in range(0,10):
+    global visoGraph
+    #global out2
+    global args
 
-            q1=quaternion_from_euler(pi*i/(10*16.0),0,0,'szxy')#-pi*i/(10*16.0),pi*i/(10*16.0),"szxy")
-            A1=displayAxis()
-            A2=displayAxis()
-            t=np.zeros((3,1),dtype=np.float64)
-            t2=np.zeros((3,1),dtype=np.float64)
-            t[1,0]=0.05*i
-            A1.Pose=createHomog(quaternion_matrix(q1)[0:3,0:3],t)
-            #A1.Pose=H1
-            #A2=displayAxis()
-            #A2.Pose=H2
-            t2[0,0]=0.05*i
-            A2.Pose=createHomog(quaternion_matrix(q1)[0:3,0:3],t2)
-            
-            outGraph.Q.put(("left",A1))
-            outGraph.Q.put(("right",A2))
-            time.sleep(1)
-        ##outGraph.Q.put(("right",A2))
-        #time.sleep(1)
-        # homogList=makeFakeMotion()
-        # for h in homogList:
-        #     print(h)
-        #     Axis=viewingAxis(h)
-        #     graph.Q.put(Axis)
-        #time.sleep(1)
+    visoData=getVisoFromBag(args.bagDirectory)
+    unit=displayAxis(scale=0.1)
+    currentPose=displayAxis(scale=0.1)
+    overallPose=displayAxis(scale=0.1)
+    outGraph.Q.put(("sensor",unit))
+    outGraph.Q.put(("Overall",overallPose))
+
+    cv2.namedWindow("EpiPolar",cv2.WINDOW_NORMAL)
+
+    mot=[]
+
+    for i in range(1,len(visoData)):
+        colL=cv2.cvtColor(visoData[i]["Left"],cv2.COLOR_GRAY2RGB)
+        colR=cv2.cvtColor(visoData[i]["Right"],cv2.COLOR_GRAY2RGB)
+        epi=drawVisoEpi(colL,colR,visoData[i]["msg"])
+        H=np.linalg.inv(deserialHomography(visoData[i]["msg"].homography))
+        mot.append(getMotion(H))
+
+        r,p,y,x,yy,zz=getLists(mot)
+        visoGraph.Q.put(("pitch",range(0,len(p)),p))
+        visoGraph.Q.put(("zz",range(0,len(zz)),zz))
+        cv2.imshow("EpiPolar",epi)
+        press=cv2.waitKey(1)
+        if(press==32):
+            wait=True
+            while(wait):
+                if(cv2.waitKey(1)==32):
+                    wait=False
+        while((not outGraph.Q.empty())and(not visoGraph.Q.empty())):
+            time.sleep(0.1)
+        # currentPose.Pose=np.linalg.inv(deserialHomography(getViso[str(i)]["H"]))
+        # overallPose.Pose=overallPose.Pose.dot(currentPose.Pose)
+        # outGraph.Q.put((str(i),overallPose))
+        # while(not outGraph.Q.empty()):
+        #     time.sleep(0.1)
+    print("completed")
 t=Thread(target=up)
 t.daemon=True
 t.start()
