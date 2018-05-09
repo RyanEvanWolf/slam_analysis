@@ -23,6 +23,7 @@ cvb=CvBridge()
 parser =argparse.ArgumentParser()
 parser.add_argument("rootDir")
 parser.add_argument("loopID")
+parser.add_argument("detectorName")
 parser.add_argument("--output_directory",default="/media/ryan/EXTRA/output")
 args,unknown=parser.parse_known_args()
 
@@ -31,15 +32,17 @@ pickleDir=projectFolder.getFeaturePickle(args.loopID)
 print("Loading from "+pickleDir)
 features=featureDatabase(pickleDir)
 print("completed Loading")
-sett,OperatingCurves=features.getOperatingCurves("SURF")
+sett,OperatingCurves=features.getOperatingCurves(args.detectorName)
 print("complete")
+frame,procPoints=features.getAllProcessingTime(args.detectorName)
 
-print(len(sett["Maximum"]))
-print(len(sett.keys()))
-print(sett["Mean"])
+#for i in procPoints:
+ #   plt.scatter((i[0]),(i[1]),marker='o',alpha=0.2)
+
+
 sty.use("seaborn")
 ###plot left number of features statistics
-
+plt.plot(frame,procPoints)
 fig, ax1=plt.subplots(1,1)
 ax1.plot(OperatingCurves["Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="Maximum")
 ax1.plot(OperatingCurves["Minimum"], mew=0.1, marker='o', c=np.random.rand(3,),label="Minimum")
