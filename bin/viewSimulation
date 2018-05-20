@@ -1,0 +1,75 @@
+#!/usr/bin/env python 
+
+
+import pickle
+from front_end.motion import *
+import numpy as np
+import matplotlib.pyplot as plt
+
+simulationData=pickle.load(open("/media/ryan/EXTRA/output/Simulation/data.p"))
+#############################
+###draw motion
+#############################
+
+#############################
+###get reprojection
+#############################
+
+#############################
+##View Motion
+############################
+for i in simulationData.slow:
+    motionString=""
+    for j in i["Motion"]["Translation"].keys():
+        if(j!="T"):
+            motionString+=j +":"+str(i["Motion"]["Translation"][j])+"|"
+    for j in i["Motion"]["Rotation"]:
+        if(j!="R"):
+            motionString+=j +":"+str(i["Motion"]["Rotation"][j])+"|"
+    H=i["Motion"]["H"]
+    nInliers,R,T,matchMask,E=i["Motion"]["Results"]["Nister"]
+    Hest=np.linalg.inv(createHomog(R[0:3,0:3],T))
+    #motionString=str(i["Motion"]["Translation"]["X"])
+    print(motionString)
+    print(getMotion(i["Motion"]["Results"]["PointCloud"]))
+    print(getMotion(Hest))
+    print(nInliers)
+    rmsError=[]
+    ###in the sensor Frame
+    frameAx=[]
+    frameAy=[]
+    frameAz=[]
+    frameBx=[]
+    frameBy=[]
+    frameBz=[]
+    for j in i["Points"]:
+        # error=j["LbPredicted"]-j["Lb"]
+        # error2=j["RbPredicted"]-j["Rb"]
+        #################
+        # lbPredicted=simulationData.settings["Pl"].dot(Hest.dot(j["Xa"]))
+        # lbPredicted=lbPredicted/lbPredicted[2,0]
+        # rbPredicted=simulationData.settings["Pr"].dot(Hest.dot(j["Xa"]))
+        # rbPredicted=rbPredicted/rbPredicted[2,0]
+        # error3=lbPredicted-j["Lb"]
+        # error4=rbPredicted-j["Rb"]
+        #lbEstimated=lbEstimated/lbEstimated[2,0]
+        #print(error,error2,error3,error4)
+        frameAx.append(j["Xa"][0,0])
+        frameAy.append(j["Xa"][1,0])
+        frameAz.append(j["Xa"][2,0])
+        frameBx.append(j["Xb"][0,0])
+        frameBy.append(j["Xb"][1,0])
+        frameBz.append(j["Xb"][2,0])
+        plt.plot((j["Xa"][0,0],j["Xb"][0,0]),(j["Xa"][2,0],j["Xb"][2,0]),'-')
+    #plt.plot(frameAx)
+    #plt.plot(frameAy)
+    #plt.plot(frameAz)
+    plt.plot(frameAx,frameAz,'ro')
+    plt.plot(frameBx,frameBz,'bo')
+    plt.show()
+##############################
+##plot clouds
+##############################
+
+
+
