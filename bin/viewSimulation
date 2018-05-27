@@ -6,6 +6,14 @@ from front_end.motion import *
 import numpy as np
 import matplotlib.pyplot as plt
 
+import argparse
+
+parser =argparse.ArgumentParser()
+parser.add_argument("pickleFile")
+parser.add_argument("--root_dir",default="/media/ryan/EXTRA/output/Simulation",type=str)
+args,unknown=parser.parse_known_args()
+
+
 simulationData=pickle.load(open("/media/ryan/EXTRA/output/Simulation/data.p"))
 #############################
 ###draw motion

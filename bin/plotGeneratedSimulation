@@ -1,0 +1,230 @@
+#!/usr/bin/env python 
+
+
+import pickle
+from front_end.motion import *
+import numpy as np
+import matplotlib.pyplot as plt 
+from front_end.motion import *
+
+import argparse
+import matplotlib.style as sty
+from front_end.simulation import *
+import os
+import statistics
+sty.use("seaborn")
+##################
+###plot the simulated Data statistics
+##################
+
+################
+##-- motion profile
+##-- Z depth profile
+##-- ScatterPlot
+#def plotCombinedViolin
+
+def set_violinPlot(ax, labels, ):
+    ax.get_xaxis().set_tick_params(direction='out')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xticks(np.arange(1, len(labels) + 1))
+    ax.set_xticklabels(labels)
+    ax.set_xlim(0.25, len(labels) + 0.75)
+    # ax.set_xlabel('Sample name')
+
+def getScatterPlots(dataIn):
+    summary=getMotion(data["H"])
+    zVal=[]
+    xVal=[]
+    yVal=[]
+    z2Val=[]
+    x2Val=[]
+    y2Val=[]
+    for pt in data["Points"]:
+        zVal.append(pt["Xa"][2,0])
+        xVal.append(pt["Xa"][0,0])
+        yVal.append(pt["Xa"][1,0])
+        z2Val.append(pt["Xb"][2,0])
+        x2Val.append(pt["Xb"][0,0])
+        y2Val.append(pt["Xb"][1,0])
+    fig,(ax1,ax2,ax3)=plt.subplots(3,1)
+    ax1.plot(xVal,zVal,'ro')
+    ax1.plot(x2Val,z2Val,'bo')
+    ax1.set_xlabel("X")
+    ax1.set_ylabel("Z")
+
+    ax2.plot(xVal,yVal,'ro')
+    ax2.plot(x2Val,y2Val,'bo')
+    ax2.set_xlabel("X")
+    ax2.set_ylabel("Y")
+
+
+    ax3.plot(zVal,yVal,'ro')
+    ax3.plot(z2Val,y2Val,'bo')
+    ax3.set_xlabel("Z")
+    ax3.set_ylabel("Y")
+    return fig,ax1,ax2,ax3
+
+
+def getMotionViolin(worldFiles):
+    yaw=[]
+    roll=[]
+    pitch=[]
+    zz=[]
+    xx=[]
+    yy=[]
+
+    for Hpickle in worldFilesSet:
+        f=open(args.root_dir+"/"+args.worldFolder+"/"+Hpickle,"r")
+        data=pickle.load(f)
+        f.close()
+        summ=getMotion(data["H"])
+        yaw.append(summ["Yaw"])
+        roll.append(summ["Roll"])
+        pitch.append(summ["Pitch"])
+        xx.append(summ["X"])
+        yy.append(summ["Y"])
+        zz.append(summ["Z"])
+
+    stdDev=[statistics.stdev(roll),statistics.stdev(pitch),statistics.stdev(yaw),
+            statistics.stdev(xx),statistics.stdev(yy),statistics.stdev(zz)]
+    mx=[max(roll),max(pitch),max(yaw),
+        max(xx),max(yy),max(zz)]
+    mn=[min(roll),min(pitch),min(yaw),
+        min(xx),min(yy),min(zz)]
+    av=[statistics.mean(roll),statistics.mean(pitch),statistics.mean(yaw),
+        statistics.mean(xx),statistics.mean(yy),statistics.mean(zz)]
+    fig,(ax1,ax2)=plt.subplots(1,2)
+    fig.suptitle("Summary of synthetic motion conditions for dominant forward translation")
+    ##############draw translation
+    ax2.violinplot([xx,yy,zz],[1,2,3], showmeans=False, showextrema=False, showmedians=True)
+    ax2.errorbar([1,1],[mn[3],mx[3]],xerr=0.15,color='black')#[stdDev[0],stdDev[1],stdDev[2]])
+    ax2.errorbar([1,1],[av[3]+stdDev[3],av[3]-stdDev[3]],xerr=0.15,color='black')
+    ax2.errorbar([2,2],[mn[4],mx[4]],xerr=0.15,color='black')#[stdDev[0],stdDev[1],stdDev[2]])
+    ax2.errorbar([2,2],[av[4]+stdDev[4],av[4]-stdDev[4]],xerr=0.15,color='black')
+    ax2.errorbar([3,3],[mn[5],mx[5]],xerr=0.15,color='black')#[stdDev[0],stdDev[1],stdDev[2]])
+    ax2.errorbar([3,3],[av[5]+stdDev[5],av[5]-stdDev[5]],xerr=0.15,color='black')
+    set_violinPlot(ax2,["X","Y","Z"])
+    ax2.set_ylabel("Translation (m)")
+
+
+
+    #############draw rotation
+    ax1.violinplot([roll,pitch,yaw],[1,2,3], showmeans=False, showextrema=False, showmedians=True)
+    ax1.errorbar([1,1],[mn[0],mx[0]],xerr=0.15,color='black')#[stdDev[0],stdDev[1],stdDev[2]])
+    ax1.errorbar([1,1],[av[0]+stdDev[0],av[0]-stdDev[0]],xerr=0.15,color='black')
+    ax1.errorbar([2,2],[mn[1],mx[1]],xerr=0.15,color='black')#[stdDev[0],stdDev[1],stdDev[2]])
+    ax1.errorbar([2,2],[av[1]+stdDev[1],av[1]-stdDev[1]],xerr=0.15,color='black')
+    ax1.errorbar([3,3],[mn[2],mx[2]],xerr=0.15,color='black')#[stdDev[0],stdDev[1],stdDev[2]])
+    ax1.errorbar([3,3],[av[2]+stdDev[2],av[2]-stdDev[2]],xerr=0.15,color='black')
+    set_violinPlot(ax1,["Roll","Pitch","Yaw"])
+    ax1.set_ylabel("Angle (deg)")
+
+    return fig,ax1,ax2
+
+parser =argparse.ArgumentParser()
+parser.add_argument("worldFolder")
+parser.add_argument("--root_dir",default="/media/ryan/EXTRA/output/Simulation",type=str)
+args,unknown=parser.parse_known_args()
+
+d=simDirectory(args.root_dir)
+motion,camera,nister=d.getSettings()
+worldFilesSet=os.listdir(args.root_dir+"/"+args.worldFolder)
+# print(len(worldFilesSet))
+# getMotionViolin(args.root_dir+"/"+args.worldFolder+worldFilesSet[0])
+
+data=pickle.load(open(args.root_dir+"/"+args.worldFolder+"/"+worldFilesSet[0],"r"))
+
+getScatterPlots(data)
+plt.show()
+    #getScatterPlots(data)
+    #plt.show()
+#simulationData=pickle.load(open(args.root_dir + "/"+args.pickleFile))
+###################
+###get motion as List 
+# yaw=[]
+# roll=[]b
+# pitch=[]
+# x=[]
+# y=[]
+# z=[]
+# for MotionIndex in simulationData.data:
+#     summary=getMotion(MotionIndex["H"])
+#     yaw.append(summary["Yaw"])
+#     pitch.append(summary["Pitch"])
+#     roll.append(summary["Roll"])
+#     x.append(summary["X"])
+#     y.append(summary["Y"])
+#     z.append(summary["Z"])
+
+# # fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(9, 4), sharey=True)
+
+# # ax1.set_title('Default violin plot')
+# # ax1.set_ylabel('Observed values')
+# # ax1.violinplot(data)
+
+# plt.plot(yaw)
+# plt.show()
+
+#############################
+###draw motion
+#############################
+
+#############################
+###get reprojection
+#############################
+
+#############################
+##View Motion
+############################
+# for i in simulationData.slow:
+#     motionString=""
+#     for j in i["Motion"]["Translation"].keys():
+#         if(j!="T"):
+#             motionString+=j +":"+str(i["Motion"]["Translation"][j])+"|"
+#     for j in i["Motion"]["Rotation"]:
+#         if(j!="R"):
+#             motionString+=j +":"+str(i["Motion"]["Rotation"][j])+"|"
+#     H=i["Motion"]["H"]
+#     nInliers,R,T,matchMask,E=i["Motion"]["Results"]["Nister"]
+#     Hest=np.linalg.inv(createHomog(R[0:3,0:3],T))
+#     #motionString=str(i["Motion"]["Translation"]["X"])
+#     print(motionString)
+#     print(getMotion(i["Motion"]["Results"]["PointCloud"]))
+#     print(getMotion(Hest))
+#     print(nInliers)
+#     rmsError=[]
+#     ###in the sensor Frame
+#     frameAx=[]
+#     frameAy=[]
+#     frameAz=[]
+#     frameBx=[]
+#     frameBy=[]
+#     frameBz=[]
+#     for j in i["Points"]:
+#         # error=j["LbPredicted"]-j["Lb"]
+#         # error2=j["RbPredicted"]-j["Rb"]
+#         #################
+#         # lbPredicted=simulationData.settings["Pl"].dot(Hest.dot(j["Xa"]))
+#         # lbPredicted=lbPredicted/lbPredicted[2,0]
+#         # rbPredicted=simulationData.settings["Pr"].dot(Hest.dot(j["Xa"]))
+#         # rbPredicted=rbPredicted/rbPredicted[2,0]
+#         # error3=lbPredicted-j["Lb"]
+#         # error4=rbPredicted-j["Rb"]
+#         #lbEstimated=lbEstimated/lbEstimated[2,0]
+#         #print(error,error2,error3,error4)
+#         frameAx.append(j["Xa"][0,0])
+#         frameAy.append(j["Xa"][1,0])
+#         frameAz.append(j["Xa"][2,0])
+#         frameBx.append(j["Xb"][0,0])
+#         frameBy.append(j["Xb"][1,0])
+#         frameBz.append(j["Xb"][2,0])
+#         plt.plot((j["Xa"][0,0],j["Xb"][0,0]),(j["Xa"][2,0],j["Xb"][2,0]),'-')
+#     #plt.plot(frameAx)
+#     #plt.plot(frameAy)
+#     #plt.plot(frameAz)
+#     plt.plot(frameAx,frameAz,'ro')
+#     plt.plot(frameBx,frameBz,'bo')
+#     plt.show()
+##############################
+##plot clouds
+##############################

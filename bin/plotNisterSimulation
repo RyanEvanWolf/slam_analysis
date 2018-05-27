@@ -1,0 +1,108 @@
+#!/usr/bin/env python 
+
+
+import pickle
+from front_end.motion import *
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.style as sty
+import os
+import argparse
+import statistics
+
+sty.use("seaborn")
+
+parser =argparse.ArgumentParser()
+parser.add_argument("worldFolder")
+parser.add_argument("--root_dir",default="/media/ryan/EXTRA/output/Simulation",type=str)
+args,unknown=parser.parse_known_args()
+
+
+worldFilesSet=os.listdir(args.root_dir+"/Nister/"+args.worldFolder)
+
+
+def set_violinPlot(ax, labels, ):
+    ax.get_xaxis().set_tick_params(direction='out')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xticks(np.arange(1, len(labels) + 1))
+    ax.set_xticklabels(labels)
+    ax.set_xlim(0.25, len(labels) + 0.75)
+    # ax.set_xlabel('Sample name')
+
+def getMotionErrorGraphs(worldFilesSet):
+    ##get different operating curves
+    hdata=pickle.load(open(args.root_dir+"/Nister/"+args.worldFolder+"/"+worldFilesSet[0],"r"))
+    operatingCurves=hdata.keys()
+
+    translationResults={}
+    for i in operatingCurves:
+        translationResults[i]=[]
+    
+    rotationResults={}
+    for i in operatingCurves:
+        rotationResults[i]=[]
+    
+    for Hpickle in worldFilesSet:
+        print(Hpickle)
+        f=open(args.root_dir+"/Nister/"+args.worldFolder+"/"+Hpickle,"r")
+        data=pickle.load(f)
+        f.close()
+        for curve in operatingCurves:
+            translationResults[curve].append(data[curve]["MotionError"]["TranslationError"]) 
+            rotationResults[curve].append(data[curve]["MotionError"]["angleError"])   
+    fig,(ax1,ax2)=plt.subplots(2,1)
+
+    print(translationResults.keys())
+    ax1.violinplot(translationResults["500"],[1],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(translationResults["750"],[2],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(translationResults["1000"],[3],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(translationResults["2000"],[4],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(translationResults["3000"],[5],showmeans=False, showextrema=False, showmedians=True)
+    set_violinPlot(ax1, ["500","750","1000","2000","3000"])#,"5000"])
+    ax1.set_xlabel("Number of Points")
+    ax1.set_ylabel("Translation L2 Error Norm")
+
+    ax2.violinplot(rotationResults["500"],[1],showmeans=False, showextrema=False, showmedians=True)
+    ax2.violinplot(rotationResults["750"],[2],showmeans=False, showextrema=False, showmedians=True)
+    ax2.violinplot(rotationResults["1000"],[3],showmeans=False, showextrema=False, showmedians=True)
+    ax2.violinplot(rotationResults["2000"],[4],showmeans=False, showextrema=False, showmedians=True)
+    ax2.violinplot(rotationResults["3000"],[5],showmeans=False, showextrema=False, showmedians=True)
+    set_violinPlot(ax2, ["500","750","1000","2000","3000"])#,"5000"])
+    ax2.set_xlabel("Number of Points")
+    ax2.set_ylabel("Rotation L2 Error Norm")
+    fig.suptitle("Violin Plot of The Five Point Algorithm L2 Error")
+    return fig,ax1,ax2
+def getInlierRatios(worldFilesSet):
+    ##get different operating curves
+    hdata=pickle.load(open(args.root_dir+"/Nister/"+args.worldFolder+"/"+worldFilesSet[0],"r"))
+    operatingCurves=hdata.keys()
+
+    GraphResults={}
+    for i in operatingCurves:
+        GraphResults[i]=[]
+    
+    for Hpickle in worldFilesSet:
+        print(Hpickle)
+        f=open(args.root_dir+"/Nister/"+args.worldFolder+"/"+Hpickle,"r")
+        data=pickle.load(f)
+        f.close()
+        for curve in operatingCurves:
+            GraphResults[curve].append(data[curve]["inlierRatio"])    
+    fig,(ax1)=plt.subplots(1,1)
+    ax1.violinplot(GraphResults["500"],[1],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(GraphResults["750"],[2],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(GraphResults["1000"],[3],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(GraphResults["2000"],[4],showmeans=False, showextrema=False, showmedians=True)
+    ax1.violinplot(GraphResults["3000"],[5],showmeans=False, showextrema=False, showmedians=True)
+
+    set_violinPlot(ax1, ["500","750","1000","2000","3000"])
+    ax1.set_xlabel("Number of Points")
+    ax1.set_ylabel("Inlier Ratio")
+    fig.suptitle("Violin Plot of The Five Point Algorithm Inlier Ratios")
+    return fig,ax1
+
+
+
+getMotionErrorGraphs(worldFilesSet)
+getInlierRatios(worldFilesSet)
+plt.show()
