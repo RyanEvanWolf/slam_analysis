@@ -10,24 +10,144 @@ import os
 import argparse
 import statistics
 
+
+noiseLevels={}
+noiseLevels["0_5"]=0.5
+noiseLevels["1"]=1
+noiseLevels["2"]=2
+noiseLevels["5"]=5
+noiseLevels["10"]=10
+noiseLevels["15"]=15
+
 sty.use("seaborn")
 
 parser =argparse.ArgumentParser()
-parser.add_argument("worldFolder")
-parser.add_argument("--root_dir",default="/media/ryan/EXTRA/output/Simulation",type=str)
+parser.add_argument("speed")
+parser.add_argument("--root_dir",default="/media/ryan/EXTRA/output/Simulation/Nister",type=str)
 args,unknown=parser.parse_known_args()
 
 
-worldFilesSet=os.listdir(args.root_dir+"/Nister/"+args.worldFolder)
-
-
+# worldFilesSet=os.listdir(args.root_dir+"/Nister/"+args.worldFolder)
 def set_violinPlot(ax, labels, ):
     ax.get_xaxis().set_tick_params(direction='out')
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xticks(np.arange(1, len(labels) + 1))
     ax.set_xticklabels(labels)
-    ax.set_xlim(0.25, len(labels) + 0.75)
+    #ax.set_xlim(0.25, len(labels) + 0.75)
     # ax.set_xlabel('Sample name')
+
+def saveNoisyMotionGraphs(speedCategory,operatingCurveNames):
+    hSpacing=1
+    barSpacing=1/8.0
+    #####################################
+    ####create the main Figure
+    fig,(ax1,ax2,ax3)=plt.subplots(3,1)
+    fig2,(ax4,ax5,ax6)=plt.subplots(3,1)
+    #fig.set_size_inches(16.53,11.69)
+    fig.tight_layout()
+    fig2.tight_layout()
+    ax3.set_xlabel("Number of Landmarks")
+    ax1.set_ylabel("X$\%$ Error")
+    
+    ax2.set_ylabel("Y$\%$ Error")
+    ax3.set_ylabel("Z$\%$ Error")
+    ax6.set_xlabel("Number of Landmarks")
+    ax4.set_ylabel(r'$\beta\%$ Error')
+    ax5.set_ylabel(r'$\gamma\%$ Error')
+    ax6.set_ylabel(r'$\alpha\%$ Error')
+    ax1.set_ylim(0,100)
+    ax2.set_ylim(0,100)
+    ax3.set_ylim(0,100)
+    ax4.set_ylim(0,100)
+    ax5.set_ylim(0,100)
+    ax6.set_ylim(0,100)
+
+    ##########################################
+    #########Draw Ideal Curves
+    IdealWorldSet=os.listdir(args.root_dir+"/"+speedCategory+"_ideal")
+    print(IdealWorldSet)
+    for curveIndex in range(0,len(operatingCurveNames)):
+        x=[]
+        y=[]
+        z=[]
+        r=[]
+        p=[]
+        yaw=[]
+        for dataPoint in IdealWorldSet:
+            print(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
+            f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
+            data=pickle.load(f)
+            f.close()
+            x.append(data[operatingCurveNames[curveIndex]]["MotionError"]["X"])
+            y.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Y"])
+            z.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Z"])
+            r.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Roll"])
+            p.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Pitch"])
+            yaw.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Yaw"])
+        drawviolin(ax1,x,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax2,y,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax3,z,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax4,r,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax5,p,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax6,yaw,curveIndex*hSpacing,barSpacing)
+    #####################################################
+    #######Draw Noise
+    noiseLevels=["0_5","1","2","5","10","15"]
+    noiseColours=[(1,0,0),(0.5,0.5,0),(0,0.5,0.5),
+                   (0,1,0),(0,1,1),(0,1,0.5)]
+    for noise in range(0,len(noiseLevels)):
+        for curveIndex in range(0,len(operatingCurveNames)):
+            x=[]
+            y=[]
+            z=[]
+            r=[]
+            p=[]
+            yaw=[]
+            for dataPoint in IdealWorldSet:
+                print(args.root_dir+"/"+speedCategory+"_ideal/"+noiseLevels[noise]+"/"+dataPoint)
+                f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
+                data=pickle.load(f)
+                f.close()
+                x.append(data[operatingCurveNames[curveIndex]]["MotionError"]["X"])
+                y.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Y"])
+                z.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Z"])
+                r.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Roll"])
+                p.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Pitch"])
+                yaw.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Yaw"])
+            drawviolin(ax1,x,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+            drawviolin(ax2,y,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+            drawviolin(ax3,z,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+            drawviolin(ax4,r,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+            drawviolin(ax5,p,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+            drawviolin(ax6,yaw,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+    ax1.xticks(0, ["500"])
+
+    # set_violinPlot(ax1, operatingCurveNames)#,"5000"])
+    # set_violinPlot(ax2, operatingCurveNames)
+    # set_violinPlot(ax3, operatingCurveNames)
+    # set_violinPlot(ax4, operatingCurveNames)#,"5000"])
+    # set_violinPlot(ax5, operatingCurveNames)
+    # set_violinPlot(ax6, operatingCurveNames)
+    plt.show()
+
+
+def drawviolin(ax,data,position,width,colour=(0,0,1),alpha=0.4):
+    parts=ax.violinplot(data,[position],showmeans=True,showextrema=False,showmedians=False,widths=width)
+    for pc in parts['bodies']:
+        pc.set_facecolor(colour)
+        pc.set_edgecolor(colour)
+        pc.set_alpha(alpha)    
+    parts["cmeans"].set_color('black')
+
+def drawOperatingCurve(fig,ax1,ax2,ax3,ax4,ax5,ax6,operatingLabel):
+
+    pass
+
+def addGraph(BasePosition,offset,set):
+    ######draw the error graphs
+    pass
+
+
 
 def getMotionErrorGraphs(worldFilesSet):
     ##get different operating curves
@@ -101,8 +221,8 @@ def getInlierRatios(worldFilesSet):
     fig.suptitle("Violin Plot of The Five Point Algorithm Inlier Ratios")
     return fig,ax1
 
+saveNoisyMotionGraphs(args.speed,["500","750","1000","2000","3000"])
 
-
-getMotionErrorGraphs(worldFilesSet)
-getInlierRatios(worldFilesSet)
-plt.show()
+# getMotionErrorGraphs(worldFilesSet)
+# getInlierRatios(worldFilesSet)
+# plt.show()
