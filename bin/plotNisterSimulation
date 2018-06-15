@@ -62,6 +62,53 @@ def saveNoisyMotionGraphs(speedCategory,operatingCurveNames):
     ax5.set_ylim(0,100)
     ax6.set_ylim(0,100)
 
+    ax1.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax1.set_xticklabels(["500","750","1000","2000","3000"])
+
+    ax2.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax2.set_xticklabels(["500","750","1000","2000","3000"])
+
+    ax3.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax3.set_xticklabels(["500","750","1000","2000","3000"])
+
+    ax4.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax4.set_xticklabels(["500","750","1000","2000","3000"])
+
+    ax5.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax5.set_xticklabels(["500","750","1000","2000","3000"])
+
+    ax6.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax6.set_xticklabels(["500","750","1000","2000","3000"])
     ##########################################
     #########Draw Ideal Curves
     IdealWorldSet=os.listdir(args.root_dir+"/"+speedCategory+"_ideal")
@@ -73,6 +120,7 @@ def saveNoisyMotionGraphs(speedCategory,operatingCurveNames):
         r=[]
         p=[]
         yaw=[]
+        print(operatingCurveNames[curveIndex])
         for dataPoint in IdealWorldSet:
             print(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
             f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
@@ -120,7 +168,7 @@ def saveNoisyMotionGraphs(speedCategory,operatingCurveNames):
             drawviolin(ax4,r,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
             drawviolin(ax5,p,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
             drawviolin(ax6,yaw,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
-    ax1.xticks(0, ["500"])
+
 
     # set_violinPlot(ax1, operatingCurveNames)#,"5000"])
     # set_violinPlot(ax2, operatingCurveNames)

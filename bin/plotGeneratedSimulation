@@ -130,7 +130,7 @@ d=simDirectory(args.root_dir)
 motion,camera,nister=d.getSettings()
 worldFilesSet=os.listdir(args.root_dir+"/"+args.worldFolder)
 # print(len(worldFilesSet))
-# getMotionViolin(args.root_dir+"/"+args.worldFolder+worldFilesSet[0])
+getMotionViolin(args.root_dir+"/"+args.worldFolder+worldFilesSet[0])
 
 data=pickle.load(open(args.root_dir+"/"+args.worldFolder+"/"+worldFilesSet[0],"r"))
 
