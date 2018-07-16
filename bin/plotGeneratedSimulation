@@ -136,6 +136,8 @@ data=pickle.load(open(args.root_dir+"/"+args.worldFolder+"/"+worldFilesSet[0],"r
 
 getScatterPlots(data)
 plt.show()
+
+
     #getScatterPlots(data)
     #plt.show()
 #simulationData=pickle.load(open(args.root_dir + "/"+args.pickleFile))

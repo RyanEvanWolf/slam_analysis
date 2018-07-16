@@ -11,6 +11,8 @@ import argparse
 import statistics
 
 
+operatingCurve=["00100","00250","00500","01000","02500"]
+
 noiseLevels={}
 noiseLevels["0_5"]=0.5
 noiseLevels["1"]=1
@@ -22,7 +24,7 @@ noiseLevels["15"]=15
 sty.use("seaborn")
 
 parser =argparse.ArgumentParser()
-parser.add_argument("speed")
+#parser.add_argument("speed")
 parser.add_argument("--root_dir",default="/media/ryan/EXTRA/output/Simulation/Nister",type=str)
 args,unknown=parser.parse_known_args()
 
@@ -36,147 +38,147 @@ def set_violinPlot(ax, labels, ):
     #ax.set_xlim(0.25, len(labels) + 0.75)
     # ax.set_xlabel('Sample name')
 
-def saveNoisyMotionGraphs(speedCategory,operatingCurveNames):
-    hSpacing=1
-    barSpacing=1/8.0
-    #####################################
-    ####create the main Figure
-    fig,(ax1,ax2,ax3)=plt.subplots(3,1)
-    fig2,(ax4,ax5,ax6)=plt.subplots(3,1)
-    #fig.set_size_inches(16.53,11.69)
-    fig.tight_layout()
-    fig2.tight_layout()
-    ax3.set_xlabel("Number of Landmarks")
-    ax1.set_ylabel("X$\%$ Error")
+# def saveNoisyMotionGraphs(speedCategory,operatingCurveNames):
+#     hSpacing=1
+#     barSpacing=1/8.0
+#     #####################################
+#     ####create the main Figure
+#     fig,(ax1,ax2,ax3)=plt.subplots(3,1)
+#     fig2,(ax4,ax5,ax6)=plt.subplots(3,1)
+#     #fig.set_size_inches(16.53,11.69)
+#     fig.tight_layout()
+#     fig2.tight_layout()
+#     ax3.set_xlabel("Number of Landmarks")
+#     ax1.set_ylabel("X$\%$ Error")
     
-    ax2.set_ylabel("Y$\%$ Error")
-    ax3.set_ylabel("Z$\%$ Error")
-    ax6.set_xlabel("Number of Landmarks")
-    ax4.set_ylabel(r'$\beta\%$ Error')
-    ax5.set_ylabel(r'$\gamma\%$ Error')
-    ax6.set_ylabel(r'$\alpha\%$ Error')
-    ax1.set_ylim(0,100)
-    ax2.set_ylim(0,100)
-    ax3.set_ylim(0,100)
-    ax4.set_ylim(0,100)
-    ax5.set_ylim(0,100)
-    ax6.set_ylim(0,100)
+#     ax2.set_ylabel("Y$\%$ Error")
+#     ax3.set_ylabel("Z$\%$ Error")
+#     ax6.set_xlabel("Number of Landmarks")
+#     ax4.set_ylabel(r'$\beta\%$ Error')
+#     ax5.set_ylabel(r'$\gamma\%$ Error')
+#     ax6.set_ylabel(r'$\alpha\%$ Error')
+#     ax1.set_ylim(0,100)
+#     ax2.set_ylim(0,100)
+#     ax3.set_ylim(0,100)
+#     ax4.set_ylim(0,100)
+#     ax5.set_ylim(0,100)
+#     ax6.set_ylim(0,100)
 
-    ax1.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
-                    2*hSpacing+3*barSpacing,
-                    3*hSpacing+3*barSpacing,
-                    4*hSpacing+3*barSpacing,
-                    5*hSpacing+3*barSpacing,
-                    6*hSpacing+3*barSpacing])
-    ax1.set_xticklabels(["500","750","1000","2000","3000"])
+#     ax1.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+#                     2*hSpacing+3*barSpacing,
+#                     3*hSpacing+3*barSpacing,
+#                     4*hSpacing+3*barSpacing,
+#                     5*hSpacing+3*barSpacing,
+#                     6*hSpacing+3*barSpacing])
+#     ax1.set_xticklabels(["500","750","1000","2000","3000"])
 
-    ax2.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
-                    2*hSpacing+3*barSpacing,
-                    3*hSpacing+3*barSpacing,
-                    4*hSpacing+3*barSpacing,
-                    5*hSpacing+3*barSpacing,
-                    6*hSpacing+3*barSpacing])
-    ax2.set_xticklabels(["500","750","1000","2000","3000"])
+#     ax2.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+#                     2*hSpacing+3*barSpacing,
+#                     3*hSpacing+3*barSpacing,
+#                     4*hSpacing+3*barSpacing,
+#                     5*hSpacing+3*barSpacing,
+#                     6*hSpacing+3*barSpacing])
+#     ax2.set_xticklabels(["500","750","1000","2000","3000"])
 
-    ax3.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
-                    2*hSpacing+3*barSpacing,
-                    3*hSpacing+3*barSpacing,
-                    4*hSpacing+3*barSpacing,
-                    5*hSpacing+3*barSpacing,
-                    6*hSpacing+3*barSpacing])
-    ax3.set_xticklabels(["500","750","1000","2000","3000"])
+#     ax3.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+#                     2*hSpacing+3*barSpacing,
+#                     3*hSpacing+3*barSpacing,
+#                     4*hSpacing+3*barSpacing,
+#                     5*hSpacing+3*barSpacing,
+#                     6*hSpacing+3*barSpacing])
+#     ax3.set_xticklabels(["500","750","1000","2000","3000"])
 
-    ax4.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
-                    2*hSpacing+3*barSpacing,
-                    3*hSpacing+3*barSpacing,
-                    4*hSpacing+3*barSpacing,
-                    5*hSpacing+3*barSpacing,
-                    6*hSpacing+3*barSpacing])
-    ax4.set_xticklabels(["500","750","1000","2000","3000"])
+#     ax4.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+#                     2*hSpacing+3*barSpacing,
+#                     3*hSpacing+3*barSpacing,
+#                     4*hSpacing+3*barSpacing,
+#                     5*hSpacing+3*barSpacing,
+#                     6*hSpacing+3*barSpacing])
+#     ax4.set_xticklabels(["500","750","1000","2000","3000"])
 
-    ax5.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
-                    2*hSpacing+3*barSpacing,
-                    3*hSpacing+3*barSpacing,
-                    4*hSpacing+3*barSpacing,
-                    5*hSpacing+3*barSpacing,
-                    6*hSpacing+3*barSpacing])
-    ax5.set_xticklabels(["500","750","1000","2000","3000"])
+#     ax5.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+#                     2*hSpacing+3*barSpacing,
+#                     3*hSpacing+3*barSpacing,
+#                     4*hSpacing+3*barSpacing,
+#                     5*hSpacing+3*barSpacing,
+#                     6*hSpacing+3*barSpacing])
+#     ax5.set_xticklabels(["500","750","1000","2000","3000"])
 
-    ax6.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
-                    2*hSpacing+3*barSpacing,
-                    3*hSpacing+3*barSpacing,
-                    4*hSpacing+3*barSpacing,
-                    5*hSpacing+3*barSpacing,
-                    6*hSpacing+3*barSpacing])
-    ax6.set_xticklabels(["500","750","1000","2000","3000"])
-    ##########################################
-    #########Draw Ideal Curves
-    IdealWorldSet=os.listdir(args.root_dir+"/"+speedCategory+"_ideal")
-    print(IdealWorldSet)
-    for curveIndex in range(0,len(operatingCurveNames)):
-        x=[]
-        y=[]
-        z=[]
-        r=[]
-        p=[]
-        yaw=[]
-        print(operatingCurveNames[curveIndex])
-        for dataPoint in IdealWorldSet:
-            print(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
-            f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
-            data=pickle.load(f)
-            f.close()
-            x.append(data[operatingCurveNames[curveIndex]]["MotionError"]["X"])
-            y.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Y"])
-            z.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Z"])
-            r.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Roll"])
-            p.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Pitch"])
-            yaw.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Yaw"])
-        drawviolin(ax1,x,curveIndex*hSpacing,barSpacing)
-        drawviolin(ax2,y,curveIndex*hSpacing,barSpacing)
-        drawviolin(ax3,z,curveIndex*hSpacing,barSpacing)
-        drawviolin(ax4,r,curveIndex*hSpacing,barSpacing)
-        drawviolin(ax5,p,curveIndex*hSpacing,barSpacing)
-        drawviolin(ax6,yaw,curveIndex*hSpacing,barSpacing)
-    #####################################################
-    #######Draw Noise
-    noiseLevels=["0_5","1","2","5","10","15"]
-    noiseColours=[(1,0,0),(0.5,0.5,0),(0,0.5,0.5),
-                   (0,1,0),(0,1,1),(0,1,0.5)]
-    for noise in range(0,len(noiseLevels)):
-        for curveIndex in range(0,len(operatingCurveNames)):
-            x=[]
-            y=[]
-            z=[]
-            r=[]
-            p=[]
-            yaw=[]
-            for dataPoint in IdealWorldSet:
-                print(args.root_dir+"/"+speedCategory+"_ideal/"+noiseLevels[noise]+"/"+dataPoint)
-                f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
-                data=pickle.load(f)
-                f.close()
-                x.append(data[operatingCurveNames[curveIndex]]["MotionError"]["X"])
-                y.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Y"])
-                z.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Z"])
-                r.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Roll"])
-                p.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Pitch"])
-                yaw.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Yaw"])
-            drawviolin(ax1,x,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
-            drawviolin(ax2,y,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
-            drawviolin(ax3,z,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
-            drawviolin(ax4,r,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
-            drawviolin(ax5,p,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
-            drawviolin(ax6,yaw,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+#     ax6.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+#                     2*hSpacing+3*barSpacing,
+#                     3*hSpacing+3*barSpacing,
+#                     4*hSpacing+3*barSpacing,
+#                     5*hSpacing+3*barSpacing,
+#                     6*hSpacing+3*barSpacing])
+#     ax6.set_xticklabels(["500","750","1000","2000","3000"])
+#     ##########################################
+#     #########Draw Ideal Curves
+#     IdealWorldSet=os.listdir(args.root_dir+"/"+speedCategory+"_ideal")
+#     print(IdealWorldSet)
+#     for curveIndex in range(0,len(operatingCurveNames)):
+#         x=[]
+#         y=[]
+#         z=[]
+#         r=[]
+#         p=[]
+#         yaw=[]
+#         print(operatingCurveNames[curveIndex])
+#         for dataPoint in IdealWorldSet:
+#             print(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
+#             f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
+#             data=pickle.load(f)
+#             f.close()
+#             x.append(data[operatingCurveNames[curveIndex]]["MotionError"]["X"])
+#             y.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Y"])
+#             z.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Z"])
+#             r.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Roll"])
+#             p.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Pitch"])
+#             yaw.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Yaw"])
+#         drawviolin(ax1,x,curveIndex*hSpacing,barSpacing)
+#         drawviolin(ax2,y,curveIndex*hSpacing,barSpacing)
+#         drawviolin(ax3,z,curveIndex*hSpacing,barSpacing)
+#         drawviolin(ax4,r,curveIndex*hSpacing,barSpacing)
+#         drawviolin(ax5,p,curveIndex*hSpacing,barSpacing)
+#         drawviolin(ax6,yaw,curveIndex*hSpacing,barSpacing)
+#     #####################################################
+#     #######Draw Noise
+#     noiseLevels=["0_5","1","2","5","10","15"]
+#     noiseColours=[(1,0,0),(0.5,0.5,0),(0,0.5,0.5),
+#                    (0,1,0),(0,1,1),(0,1,0.5)]
+#     for noise in range(0,len(noiseLevels)):
+#         for curveIndex in range(0,len(operatingCurveNames)):
+#             x=[]
+#             y=[]
+#             z=[]
+#             r=[]
+#             p=[]
+#             yaw=[]
+#             for dataPoint in IdealWorldSet:
+#                 print(args.root_dir+"/"+speedCategory+"_ideal/"+noiseLevels[noise]+"/"+dataPoint)
+#                 f=open(args.root_dir+"/"+speedCategory+"_ideal/"+dataPoint)
+#                 data=pickle.load(f)
+#                 f.close()
+#                 x.append(data[operatingCurveNames[curveIndex]]["MotionError"]["X"])
+#                 y.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Y"])
+#                 z.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Z"])
+#                 r.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Roll"])
+#                 p.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Pitch"])
+#                 yaw.append(data[operatingCurveNames[curveIndex]]["MotionError"]["Yaw"])
+#             drawviolin(ax1,x,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+#             drawviolin(ax2,y,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+#             drawviolin(ax3,z,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+#             drawviolin(ax4,r,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+#             drawviolin(ax5,p,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
+#             drawviolin(ax6,yaw,curveIndex*hSpacing+(1+noise)*barSpacing,barSpacing,noiseColours[noise])
 
 
-    # set_violinPlot(ax1, operatingCurveNames)#,"5000"])
-    # set_violinPlot(ax2, operatingCurveNames)
-    # set_violinPlot(ax3, operatingCurveNames)
-    # set_violinPlot(ax4, operatingCurveNames)#,"5000"])
-    # set_violinPlot(ax5, operatingCurveNames)
-    # set_violinPlot(ax6, operatingCurveNames)
-    plt.show()
+#     # set_violinPlot(ax1, operatingCurveNames)#,"5000"])
+#     # set_violinPlot(ax2, operatingCurveNames)
+#     # set_violinPlot(ax3, operatingCurveNames)
+#     # set_violinPlot(ax4, operatingCurveNames)#,"5000"])
+#     # set_violinPlot(ax5, operatingCurveNames)
+#     # set_violinPlot(ax6, operatingCurveNames)
+#     plt.show()
 
 
 def drawviolin(ax,data,position,width,colour=(0,0,1),alpha=0.4):
@@ -195,82 +197,156 @@ def addGraph(BasePosition,offset,set):
     ######draw the error graphs
     pass
 
-
-
-def getMotionErrorGraphs(worldFilesSet):
-    ##get different operating curves
-    hdata=pickle.load(open(args.root_dir+"/Nister/"+args.worldFolder+"/"+worldFilesSet[0],"r"))
-    operatingCurves=hdata.keys()
-
-    translationResults={}
-    for i in operatingCurves:
-        translationResults[i]=[]
+def plotViolinGraphs(originalDir,newDir,methodName):
+    typesCurves=os.listdir(newDir)
+    hSpacing=1
+    barSpacing=1/8.0
+    #####################################
+    ####create the main Figure
+    fig,(ax1,ax2,ax3)=plt.subplots(3,1)
+    fig2,(ax4,ax5,ax6)=plt.subplots(3,1)
+    #fig.set_size_inches(16.53,11.69)
+    fig.tight_layout()
+    fig2.tight_layout()
+    ax3.set_xlabel("Number of Landmarks")
+    ax1.set_ylabel("$|X|$ Error (m)")
     
-    rotationResults={}
-    for i in operatingCurves:
-        rotationResults[i]=[]
-    
-    for Hpickle in worldFilesSet:
-        print(Hpickle)
-        f=open(args.root_dir+"/Nister/"+args.worldFolder+"/"+Hpickle,"r")
-        data=pickle.load(f)
-        f.close()
-        for curve in operatingCurves:
-            translationResults[curve].append(data[curve]["MotionError"]["TranslationError"]) 
-            rotationResults[curve].append(data[curve]["MotionError"]["angleError"])   
-    fig,(ax1,ax2)=plt.subplots(2,1)
+    ax2.set_ylabel("$|Y|$ Error (m)")
+    ax3.set_ylabel("$|Z|$ Error (m)")
+    ax6.set_xlabel("Number of Landmarks")
+    ax4.set_ylabel(r'$|\beta|$ Error (Degrees)')
+    ax5.set_ylabel(r'$|\gamma|$ Error (Degrees)')
+    ax6.set_ylabel(r'$|\alpha|$ Error (Degrees)')
+    ax1.set_ylim(0,2)
+    ax2.set_ylim(0,2)
+    ax3.set_ylim(0,2)
+    ax4.set_ylim(0,15)
+    ax5.set_ylim(0,15)
+    ax6.set_ylim(0,15)
 
-    print(translationResults.keys())
-    ax1.violinplot(translationResults["500"],[1],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(translationResults["750"],[2],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(translationResults["1000"],[3],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(translationResults["2000"],[4],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(translationResults["3000"],[5],showmeans=False, showextrema=False, showmedians=True)
-    set_violinPlot(ax1, ["500","750","1000","2000","3000"])#,"5000"])
-    ax1.set_xlabel("Number of Points")
-    ax1.set_ylabel("Translation L2 Error Norm")
+    ax1.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax1.set_xticklabels(operatingCurve)
 
-    ax2.violinplot(rotationResults["500"],[1],showmeans=False, showextrema=False, showmedians=True)
-    ax2.violinplot(rotationResults["750"],[2],showmeans=False, showextrema=False, showmedians=True)
-    ax2.violinplot(rotationResults["1000"],[3],showmeans=False, showextrema=False, showmedians=True)
-    ax2.violinplot(rotationResults["2000"],[4],showmeans=False, showextrema=False, showmedians=True)
-    ax2.violinplot(rotationResults["3000"],[5],showmeans=False, showextrema=False, showmedians=True)
-    set_violinPlot(ax2, ["500","750","1000","2000","3000"])#,"5000"])
-    ax2.set_xlabel("Number of Points")
-    ax2.set_ylabel("Rotation L2 Error Norm")
-    fig.suptitle("Violin Plot of The Five Point Algorithm L2 Error")
-    return fig,ax1,ax2
-def getInlierRatios(worldFilesSet):
-    ##get different operating curves
-    hdata=pickle.load(open(args.root_dir+"/Nister/"+args.worldFolder+"/"+worldFilesSet[0],"r"))
-    operatingCurves=hdata.keys()
+    ax2.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax2.set_xticklabels(operatingCurve)
 
-    GraphResults={}
-    for i in operatingCurves:
-        GraphResults[i]=[]
-    
-    for Hpickle in worldFilesSet:
-        print(Hpickle)
-        f=open(args.root_dir+"/Nister/"+args.worldFolder+"/"+Hpickle,"r")
-        data=pickle.load(f)
-        f.close()
-        for curve in operatingCurves:
-            GraphResults[curve].append(data[curve]["inlierRatio"])    
-    fig,(ax1)=plt.subplots(1,1)
-    ax1.violinplot(GraphResults["500"],[1],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(GraphResults["750"],[2],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(GraphResults["1000"],[3],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(GraphResults["2000"],[4],showmeans=False, showextrema=False, showmedians=True)
-    ax1.violinplot(GraphResults["3000"],[5],showmeans=False, showextrema=False, showmedians=True)
+    ax3.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax3.set_xticklabels(operatingCurve)
 
-    set_violinPlot(ax1, ["500","750","1000","2000","3000"])
-    ax1.set_xlabel("Number of Points")
-    ax1.set_ylabel("Inlier Ratio")
-    fig.suptitle("Violin Plot of The Five Point Algorithm Inlier Ratios")
-    return fig,ax1
+    ax4.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax4.set_xticklabels(operatingCurve)
 
-saveNoisyMotionGraphs(args.speed,["500","750","1000","2000","3000"])
+    ax5.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax5.set_xticklabels(operatingCurve)
 
-# getMotionErrorGraphs(worldFilesSet)
-# getInlierRatios(worldFilesSet)
-# plt.show()
+    ax6.set_xticks([0+3*barSpacing,1*hSpacing+3*barSpacing,
+                    2*hSpacing+3*barSpacing,
+                    3*hSpacing+3*barSpacing,
+                    4*hSpacing+3*barSpacing,
+                    5*hSpacing+3*barSpacing,
+                    6*hSpacing+3*barSpacing])
+    ax6.set_xticklabels(operatingCurve)
+    # ##########################################
+    # #########Draw Ideal Curves
+    IdealWorldSet=os.listdir(originalDir)
+    print(IdealWorldSet)  
+    curveIndex=0 
+    for curveID in operatingCurve:
+        x=[]
+        y=[]
+        z=[]
+        r=[]
+        p=[]
+        yaw=[]
+        for motion in IdealWorldSet:
+            f=open(originalDir+"/"+motion)
+            data=pickle.load(f)
+            f.close()
+            result=compareAbsoluteMotion(data["H"],decomposeTransform(data["OC"][curveID][methodName]["H"]))
+            if(x>1 or y > 1 or z >1 or r >1 or p > 1 or yaw >1):
+                print(result)
+            x.append(result["X"])
+            y.append(result["Y"])
+            z.append(result["Z"])
+            r.append(result["Roll"])
+            p.append(result["Pitch"])
+            yaw.append(result["Yaw"])
+        drawviolin(ax1,x,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax2,y,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax3,z,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax4,r,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax5,p,curveIndex*hSpacing,barSpacing)
+        drawviolin(ax6,yaw,curveIndex*hSpacing,barSpacing)
+        curveIndex+=1
+
+
+
+
+
+    # ################################
+    # ##draw outlier curves
+    for outlierIndex in range(0,len(typesCurves)):
+        motionSet=os.listdir(newDir+"/"+typesCurves[outlierIndex]) 
+
+        outlierColours=[(1,0,0),(0.5,0.5,0),(0,0.5,0.5),
+        (0,1,0),(0,1,1)]   
+        ind=0
+        for curveID in operatingCurve:
+            x=[]
+            y=[]
+            z=[]
+            r=[]
+            p=[]
+            yaw=[]  
+            print(typesCurves[outlierIndex],curveID)
+            for motion in motionSet:
+                print(originalDir+"/"+motion,newDir+"/"+typesCurves[outlierIndex]+"/"+motion)
+                f=open(originalDir+"/"+motion)
+                Idealdata=pickle.load(f)
+                f.close()
+                f=open(newDir+"/"+typesCurves[outlierIndex]+"/"+motion,"r")
+                data=pickle.load(f)
+                f.close() 
+                results=compareAbsoluteMotion(Idealdata["H"],decomposeTransform(data[curveID][methodName]["H"]))
+                x.append(results["X"])
+                y.append(results["Y"])
+                z.append(results["Z"])
+                r.append(results["Roll"])
+                p.append(results["Pitch"])
+                yaw.append(results["Yaw"])
+            drawviolin(ax1,x,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
+            drawviolin(ax2,y,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
+            drawviolin(ax3,z,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
+            drawviolin(ax4,r,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
+            drawviolin(ax5,p,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
+            drawviolin(ax6,yaw,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
+            ind+=1
+plotViolinGraphs("/media/ryan/EXTRA/output/Simulation/slow_ideal","/media/ryan/EXTRA/output/Simulation/extracted/slow_outlier","rigidResult")
+plotViolinGraphs("/media/ryan/EXTRA/output/Simulation/slow_ideal","/media/ryan/EXTRA/output/Simulation/extracted/slow_outlier","nisterResult")
+
+plt.show()
