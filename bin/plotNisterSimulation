@@ -346,7 +346,7 @@ def plotViolinGraphs(originalDir,newDir,methodName):
             drawviolin(ax5,p,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
             drawviolin(ax6,yaw,ind*hSpacing+(outlierIndex+1)*barSpacing,barSpacing,outlierColours[outlierIndex])
             ind+=1
-plotViolinGraphs("/media/ryan/EXTRA/output/Simulation/slow_ideal","/media/ryan/EXTRA/output/Simulation/extracted/slow_outlier","rigidResult")
-plotViolinGraphs("/media/ryan/EXTRA/output/Simulation/slow_ideal","/media/ryan/EXTRA/output/Simulation/extracted/slow_outlier","nisterResult")
+plotViolinGraphs("/media/ryan/EXTRA/output/Simulation/fast_ideal","/media/ryan/EXTRA/output/Simulation/extracted/fast_outlier","rigidResult")
+plotViolinGraphs("/media/ryan/EXTRA/output/Simulation/fast_ideal","/media/ryan/EXTRA/output/Simulation/extracted/fast_outlier","nisterResult")
 
 plt.show()

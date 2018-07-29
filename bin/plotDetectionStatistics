@@ -4,7 +4,7 @@ import rospy
 import cv2
 import time
 
-from dataset.utils import Directories
+from dataset.utils import *
 from front_end.utils import *
 from front_end.srv import *
 from front_end.msg import frameDetection,ProcTime,kPoint
@@ -20,56 +20,120 @@ import argparse
 cvb=CvBridge() 
 
 
+
 parser =argparse.ArgumentParser()
 parser.add_argument("rootDir")
-parser.add_argument("loopID")
-parser.add_argument("detectorName")
+parser.add_argument("dataset")
+parser.add_argument("loopIDs")###comma seperated
+parser.add_argument("detectorType")
 parser.add_argument("--output_directory",default="/media/ryan/EXTRA/output")
 args,unknown=parser.parse_known_args()
 
-projectFolder=Directories(args.rootDir,args.output_directory) 
-pickleDir=projectFolder.getFeaturePickle(args.loopID)
-print("Loading from "+pickleDir)
-features=featureDatabase(pickleDir)
-print("completed Loading")
-sett,OperatingCurves=features.getOperatingCurves(args.detectorName)
-print("complete")
-frame,procPoints=features.getAllProcessingTime(args.detectorName)
-
-#for i in procPoints:
- #   plt.scatter((i[0]),(i[1]),marker='o',alpha=0.2)
-
-
+currentDirectories=getDefaultDirectories()
+currentDirectories["Root"]=args.rootDir
+currentDirectories["Dataset"]=args.dataset
+colours=OperatingCurveColours()
 sty.use("seaborn")
-###plot left number of features statistics
-plt.plot(frame,procPoints)
-fig, ax1=plt.subplots(1,1)
-ax1.plot(OperatingCurves["Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="Maximum")
-ax1.plot(OperatingCurves["Minimum"], mew=0.1, marker='o', c=np.random.rand(3,),label="Minimum")
-ax1.plot(OperatingCurves["Mean"], mew=0.1, marker='o', c=(0.0,0,0),label="Mean")
-ax1.fill_between(range(len(OperatingCurves["-Deviation"])), OperatingCurves["-Deviation"], OperatingCurves["+Deviation"], alpha=0.4, facecolor=(0.3,0.0,0.7), interpolate=True,label="Standard Deviation")
+projectFolder=Directories(currentDirectories) 
+def drawSubFigures(loopIDS):
 
-ax1.set_ylim(ymin=0.0)
-ax1.set_ylabel("Number of features")
-ax1.set_xlabel("Frame Number")
-ax1.legend()
+    #######################
+    ###draw grey Loops
+    ids=OperatingCurveIDs()
+    figures,ax=plt.subplots(3,3)
+    ax[2,2].set_visible(False)
+    ax[2,0].set_visible(False)
+    
+    for currentLoop in loopIDS:
+        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+        f=open(pickleDir,"r")
+        inData=pickle.load(f)
+        f.close()   
+        x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+        ax[0,0].plot(x,inData["nFeatures"]["0.8Maximum"])
+        ax[0,0].set_title("0.8Maximum")
+        ax[0,1].plot(x,inData["nFeatures"]["0.9Maximum"])
+        ax[0,1].set_title("0.9Maximum")
+        ax[0,2].plot(x,inData["nFeatures"]["Maximum"])
+        ax[0,2].set_title("Maximum")
+        ax[1,0].plot(x,inData["nFeatures"]["-Deviation"])
+        ax[1,0].set_title("-Deviation")
+        ax[1,1].plot(x,inData["nFeatures"]["Mean"])
+        ax[1,1].set_title("Mean")
+        ax[1,2].plot(x,inData["nFeatures"]["+Deviation"])
+        ax[1,2].set_title("+Deviation")
+        ax[2,1].plot(x,inData["nFeatures"]["Minimum"],label=currentLoop)
+        ax[2,1].set_title("Minimum")
+    ax[2,1].legend()
+    ax[2,1].set_xlabel("Normalized Frame Number")
+    ax[2,1].set_ylabel("Features Detected")
+def detailedFigure(loopID):
+    pickleDir=projectFolder.getCurvePickle(loopID,args.detectorType)
+    print("loading from: " +pickleDir)
+    f=open(pickleDir,"r")
+    inData=pickle.load(f)
+    f.close()
 
-fig2, ax2=plt.subplots(1,1)
-ax2.fill_between(range(len(OperatingCurves["Minimum"])), OperatingCurves["Minimum"], OperatingCurves["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
-ax2.fill_between(range(len(OperatingCurves["-Deviation"])), OperatingCurves["-Deviation"], OperatingCurves["+Deviation"], alpha=0.4, facecolor=(0,0.8,0), interpolate=True)
 
-ax2.plot(OperatingCurves["Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="Maximum")
-ax2.plot(OperatingCurves["0.9Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="0.9Maximum")
-ax2.plot(OperatingCurves["0.8Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="0.8Maximum")
-ax2.plot(OperatingCurves["0.7Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="0.7Maximum")
-ax2.plot(OperatingCurves["0.6Maximum"], mew=0.1, marker='o', c=np.random.rand(3,),label="0.6Maximum")
-ax2.plot(OperatingCurves["+Deviation"], mew=0.1, marker='o', c=np.random.rand(3,),label="+Deviation")
-ax2.plot(OperatingCurves["Mean"], mew=0.1, marker='o', c=(0.0,0,0),label="Mean")
+    ##########
+    ###draw nFeatures and their Curves
+    ###############
+    fig, ax1=plt.subplots(1,1)
+    x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"]))
+    ax1.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o', c=colours[0],label="Maximum")
+    ax1.plot(x,inData["nFeatures"]["Minimum"], mew=0.1, marker='o', c=colours[-1],label="Minimum")
+    ax1.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o', c=colours[-3],label="Mean")
+    ax1.fill_between(x, inData["nFeatures"]["-Deviation"],inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.3,0.0,0.7), interpolate=True,label="Standard Deviation")
 
-ax2.set_ylim(ymin=0.0)
-ax2.set_ylabel("Number of features")
-ax2.set_xlabel("Frame Number")
+    ax1.set_ylim(ymin=0.0)
+    ax1.set_ylabel("Number of features")
+    ax1.set_xlabel("Normalized Frame Number")
+    ax1.legend()
 
-ax2.legend()
+    fig2, ax2=plt.subplots(1,1)
+    ax2.fill_between(x, inData["nFeatures"]["Minimum"], inData["nFeatures"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+    ax2.fill_between(x, inData["nFeatures"]["-Deviation"], inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0,0.8,0), interpolate=True)
+
+    ax2.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o', c=colours[0],label="Maximum")
+    ax2.plot(x,inData["nFeatures"]["0.9Maximum"], mew=0.1, marker='o', c=colours[1],label="0.9Maximum")
+    ax2.plot(x,inData["nFeatures"]["0.8Maximum"], mew=0.1, marker='o', c=colours[2],label="0.8Maximum")
+    ax2.plot(x,inData["nFeatures"]["+Deviation"], mew=0.1, marker='o', c=colours[3],label="+Deviation")
+    ax2.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o', c=colours[4],label="Mean")
+
+    ax2.set_ylim(ymin=0.0)
+    ax2.set_ylabel("Number of features")
+    ax2.set_xlabel("Normalized Frame Number")
+
+    ax2.legend()
+    ########################
+    ###draw processing Time and their Curves
+    #######################
+    fig3, ax3=plt.subplots(1,1)
+    ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+    ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0,0.8,0), interpolate=True)
+
+    ax3.plot(x,inData["times"]["Maximum"], mew=0.1, marker='o', c=colours[0],label="Maximum")
+    ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o', c=colours[1],label="0.9Maximum")
+    ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o', c=colours[2],label="0.8Maximum")
+    ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o', c=colours[3],label="+Deviation")
+    ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o', c=colours[4],label="Mean")
+
+    ax3.set_ylim(ymin=0.0)
+    ax3.set_ylabel("Processing Time (ms)")
+    ax3.set_xlabel("Normalized Frame Number")
+
+    ax3.legend()
+#####
+loops=args.loopIDs.split(",")
+if(len(loops)>1):
+    drawSubFigures(loops)
+    detailedFigure(loops[0])
+else:
+    detailedFigure(loops[0])
+
+
+
 
 plt.show()
+
+print("completed")
