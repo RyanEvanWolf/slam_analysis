@@ -40,9 +40,9 @@ def drawSubFigures(loopIDS):
     #######################
     ###draw grey Loops
     ids=OperatingCurveIDs()
-    figures,ax=plt.subplots(3,3)
-    ax[2,2].set_visible(False)
-    ax[2,0].set_visible(False)
+    figures,ax=plt.subplots(4,2)
+    #ax[2,2].set_visible(False)
+    ax[3,1].set_visible(False)
     
     for currentLoop in loopIDS:
         pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
@@ -54,19 +54,19 @@ def drawSubFigures(loopIDS):
         ax[0,0].set_title("0.8Maximum")
         ax[0,1].plot(x,inData["nFeatures"]["0.9Maximum"])
         ax[0,1].set_title("0.9Maximum")
-        ax[0,2].plot(x,inData["nFeatures"]["Maximum"])
-        ax[0,2].set_title("Maximum")
-        ax[1,0].plot(x,inData["nFeatures"]["-Deviation"])
-        ax[1,0].set_title("-Deviation")
-        ax[1,1].plot(x,inData["nFeatures"]["Mean"])
-        ax[1,1].set_title("Mean")
-        ax[1,2].plot(x,inData["nFeatures"]["+Deviation"])
-        ax[1,2].set_title("+Deviation")
-        ax[2,1].plot(x,inData["nFeatures"]["Minimum"],label=currentLoop)
-        ax[2,1].set_title("Minimum")
-    ax[2,1].legend()
-    ax[2,1].set_xlabel("Normalized Frame Number")
-    ax[2,1].set_ylabel("Features Detected")
+        ax[1,0].plot(x,inData["nFeatures"]["Maximum"])
+        ax[1,0].set_title("Maximum")
+        ax[1,1].plot(x,inData["nFeatures"]["+Deviation"])
+        ax[1,1].set_title("+Deviation")
+        ax[2,0].plot(x,inData["nFeatures"]["Mean"])
+        ax[2,0].set_title("Mean")
+        ax[2,1].plot(x,inData["nFeatures"]["-Deviation"])
+        ax[2,1].set_title("-Deviation")
+        ax[3,0].plot(x,inData["nFeatures"]["Minimum"],label=currentLoop)
+        ax[3,0].set_title("Minimum")
+    ax[3,1].legend()
+    ax[3,1].set_xlabel("Normalized Frame Number")
+    ax[3,1].set_ylabel("Features Detected")
 def detailedFigure(loopID):
     pickleDir=projectFolder.getCurvePickle(loopID,args.detectorType)
     print("loading from: " +pickleDir)
@@ -74,16 +74,16 @@ def detailedFigure(loopID):
     inData=pickle.load(f)
     f.close()
 
-
+    MarkSize=0.2
     ##########
     ###draw nFeatures and their Curves
     ###############
     fig, ax1=plt.subplots(1,1)
     x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"]))
-    ax1.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o', c=colours[0],label="Maximum")
-    ax1.plot(x,inData["nFeatures"]["Minimum"], mew=0.1, marker='o', c=colours[-1],label="Minimum")
-    ax1.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o', c=colours[-3],label="Mean")
-    ax1.fill_between(x, inData["nFeatures"]["-Deviation"],inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.3,0.0,0.7), interpolate=True,label="Standard Deviation")
+    ax1.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+    ax1.plot(x,inData["nFeatures"]["Minimum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-1],label="Minimum")
+    ax1.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-3],label="Mean")
+    ax1.fill_between(x, inData["nFeatures"]["-Deviation"],inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0.0,0.8), interpolate=True,label="Standard Deviation")
 
     ax1.set_ylim(ymin=0.0)
     ax1.set_ylabel("Number of features")
@@ -91,14 +91,14 @@ def detailedFigure(loopID):
     ax1.legend()
 
     fig2, ax2=plt.subplots(1,1)
-    ax2.fill_between(x, inData["nFeatures"]["Minimum"], inData["nFeatures"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
-    ax2.fill_between(x, inData["nFeatures"]["-Deviation"], inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0,0.8,0), interpolate=True)
+   # ax2.fill_between(x, inData["nFeatures"]["Minimum"], inData["nFeatures"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+    ax2.fill_between(x, inData["nFeatures"]["-Deviation"], inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
 
-    ax2.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o', c=colours[0],label="Maximum")
-    ax2.plot(x,inData["nFeatures"]["0.9Maximum"], mew=0.1, marker='o', c=colours[1],label="0.9Maximum")
-    ax2.plot(x,inData["nFeatures"]["0.8Maximum"], mew=0.1, marker='o', c=colours[2],label="0.8Maximum")
-    ax2.plot(x,inData["nFeatures"]["+Deviation"], mew=0.1, marker='o', c=colours[3],label="+Deviation")
-    ax2.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o', c=colours[4],label="Mean")
+    ax2.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+    ax2.plot(x,inData["nFeatures"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+    ax2.plot(x,inData["nFeatures"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+    ax2.plot(x,inData["nFeatures"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+    ax2.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
 
     ax2.set_ylim(ymin=0.0)
     ax2.set_ylabel("Number of features")
@@ -109,14 +109,14 @@ def detailedFigure(loopID):
     ###draw processing Time and their Curves
     #######################
     fig3, ax3=plt.subplots(1,1)
-    ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
-    ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0,0.8,0), interpolate=True)
+    #ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+    ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
 
-    ax3.plot(x,inData["times"]["Maximum"], mew=0.1, marker='o', c=colours[0],label="Maximum")
-    ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o', c=colours[1],label="0.9Maximum")
-    ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o', c=colours[2],label="0.8Maximum")
-    ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o', c=colours[3],label="+Deviation")
-    ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o', c=colours[4],label="Mean")
+    ax3.plot(x,inData["times"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+    ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+    ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+    ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+    ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
 
     ax3.set_ylim(ymin=0.0)
     ax3.set_ylabel("Processing Time (ms)")
