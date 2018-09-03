@@ -32,9 +32,39 @@ args,unknown=parser.parse_known_args()
 currentDirectories=getDefaultDirectories()
 currentDirectories["Root"]=args.rootDir
 currentDirectories["Dataset"]=args.dataset
+currentDirectories["RootOut"]=args.output_directory
 colours=OperatingCurveColours()
 sty.use("seaborn")
 projectFolder=Directories(currentDirectories) 
+
+def drawIndividualFigures(loopIDS,save=True):
+    #######################
+    ###draw grey Loops
+    ids=OperatingCurveIDs()
+    setFigures={}
+    count=0
+    for i in ids:
+        setFigures[i]=plt.subplots(1,1)
+    for currentLoop in loopIDS:
+        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+        f=open(pickleDir,"r")
+        inData=pickle.load(f)
+        f.close()   
+        x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+        for figure in ids:
+            setFigures[figure][1].plot(x,inData["nFeatures"][figure],label=currentLoop,linewidth=0.9,alpha=0.7)
+            setFigures[figure][1].set_title(figure)
+            setFigures[figure][1].legend()
+            setFigures[figure][1].set_xlabel("Normalized Frame Number")
+            setFigures[figure][1].set_ylabel("Features Detected")
+        count+=1
+    if(save):
+        print("saving to files")
+        fname=currentDirectories
+        for f in setFigures:
+            fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+".png"
+            print(fname)
+            setFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
 def drawSubFigures(loopIDS):
 
     #######################
@@ -67,7 +97,7 @@ def drawSubFigures(loopIDS):
     ax[3,1].legend()
     ax[3,1].set_xlabel("Normalized Frame Number")
     ax[3,1].set_ylabel("Features Detected")
-def detailedFigure(loopID):
+def detailedFigure(loopID,save=True):
     pickleDir=projectFolder.getCurvePickle(loopID,args.detectorType)
     print("loading from: " +pickleDir)
     f=open(pickleDir,"r")
@@ -110,23 +140,31 @@ def detailedFigure(loopID):
     #######################
     fig3, ax3=plt.subplots(1,1)
     #ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
-    ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
+    #ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
 
-    ax3.plot(x,inData["times"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
-    ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
-    ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
-    ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
-    ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
+    ax3.plot(x,inData["times"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+    ax3.plot(x,inData["times"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+    ax3.plot(x,inData["times"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+    ax3.plot(x,inData["times"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+    ax3.plot(x,inData["times"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
+    #ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+    #ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+    #ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+    #ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
 
     ax3.set_ylim(ymin=0.0)
     ax3.set_ylabel("Processing Time (ms)")
     ax3.set_xlabel("Normalized Frame Number")
 
     ax3.legend()
+    if(save):
+        fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_time.png"
+        fig3.savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
 #####
 loops=args.loopIDs.split(",")
 if(len(loops)>1):
-    drawSubFigures(loops)
+    drawIndividualFigures(loops)
+    #drawSubFigures(loops)
     detailedFigure(loops[0])
 else:
     detailedFigure(loops[0])
@@ -134,6 +172,6 @@ else:
 
 
 
-plt.show()
+#plt.show()
 
 print("completed")

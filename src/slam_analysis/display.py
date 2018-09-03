@@ -181,7 +181,6 @@ class display2D:
     def __init__(self,coordTransform=np.eye(4,dtype=np.float64)):
         self.coordTransform=coordTransform
         self.Q=Queue()
-
         self.data={}
         self.initGraph()
         #self.addAxis("world")
