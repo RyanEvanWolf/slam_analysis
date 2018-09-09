@@ -37,7 +37,7 @@ colours=OperatingCurveColours()
 sty.use("seaborn")
 projectFolder=Directories(currentDirectories) 
 
-def drawIndividualFigures(loopIDS,save=True):
+def drawJetsonFigures(loopIDS,save=True):
     #######################
     ###draw grey Loops
     ids=OperatingCurveIDs()
@@ -45,6 +45,24 @@ def drawIndividualFigures(loopIDS,save=True):
     count=0
     for i in ids:
         setFigures[i]=plt.subplots(1,1)
+    for currentLoop in loopIDS:
+        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+        pickleDir=pickleDir[:pickleDir.find('.')] +"_jetsonCurves.p"
+        print(pickleDir)
+        f=open(pickleDir,"r")
+        inData=pickle.load(f)
+        f.close()         
+        #x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+def drawIndividualFigures(loopIDS,save=True):
+    #######################
+    ###draw grey Loops
+    ids=OperatingCurveIDs()
+    setFigures={}
+    setJetsonFigures={}
+    count=0
+    for i in ids:
+        setFigures[i]=plt.subplots(1,1)
+        setJetsonFigures[i]=plt.subplots(1,1)
     for currentLoop in loopIDS:
         pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
         f=open(pickleDir,"r")
@@ -57,6 +75,18 @@ def drawIndividualFigures(loopIDS,save=True):
             setFigures[figure][1].legend()
             setFigures[figure][1].set_xlabel("Normalized Frame Number")
             setFigures[figure][1].set_ylabel("Features Detected")
+        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+        pickleDir=pickleDir[:pickleDir.find('.')] +"_jetsonCurves.p"
+        f=open(pickleDir,"r")
+        inData=pickle.load(f)
+        f.close()   
+        x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+        for figure in ids:
+            setJetsonFigures[figure][1].plot(x,inData["nFeatures"][figure],label=currentLoop,linewidth=0.9,alpha=0.7)
+            setJetsonFigures[figure][1].set_title(figure)
+            setJetsonFigures[figure][1].legend()
+            setJetsonFigures[figure][1].set_xlabel("Normalized Frame Number")
+            setJetsonFigures[figure][1].set_ylabel("Features Detected")
         count+=1
     if(save):
         print("saving to files")
@@ -65,6 +95,10 @@ def drawIndividualFigures(loopIDS,save=True):
             fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+".png"
             print(fname)
             setFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
+        for f in setJetsonFigures:
+            fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+"JETSON.png"
+            print(fname)
+            setJetsonFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
 def drawSubFigures(loopIDS):
 
     #######################
@@ -162,12 +196,22 @@ def detailedFigure(loopID,save=True):
         fig3.savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
 #####
 loops=args.loopIDs.split(",")
+
+####
+##for now
+####
+#drawJetsonFigures(loops)
+
+
 if(len(loops)>1):
     drawIndividualFigures(loops)
     #drawSubFigures(loops)
     detailedFigure(loops[0])
+    pass
 else:
+    drawIndividualFigures(loops)
     detailedFigure(loops[0])
+    pass
 
 
 
