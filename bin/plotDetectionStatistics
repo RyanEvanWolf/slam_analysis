@@ -22,200 +22,388 @@ cvb=CvBridge()
 
 
 parser =argparse.ArgumentParser()
-parser.add_argument("rootDir")
 parser.add_argument("dataset")
-parser.add_argument("loopIDs")###comma seperated
+parser.add_argument("loopID")
 parser.add_argument("detectorType")
+parser.add_argument("--rootDir",default="/home/ryan",help="The root directory of the ros Bags such that rootDir/DATAx/Bags is locatable & rootDir/Calibration")
 parser.add_argument("--output_directory",default="/media/ryan/EXTRA/output")
+parser.add_argument("--display",default="False")
 args,unknown=parser.parse_known_args()
 
 currentDirectories=getDefaultDirectories()
 currentDirectories["Root"]=args.rootDir
-currentDirectories["Dataset"]=args.dataset
 currentDirectories["RootOut"]=args.output_directory
+
+projectFolder=Directories(currentDirectories) 
 colours=OperatingCurveColours()
 sty.use("seaborn")
-projectFolder=Directories(currentDirectories) 
 
-def drawJetsonFigures(loopIDS,save=True):
-    #######################
-    ###draw grey Loops
+def drawFeatureFigures(loopIDS,save=True,compareGraph="Mean"):
     ids=OperatingCurveIDs()
-    setFigures={}
-    count=0
-    for i in ids:
-        setFigures[i]=plt.subplots(1,1)
-    for currentLoop in loopIDS:
-        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
-        pickleDir=pickleDir[:pickleDir.find('.')] +"_jetsonCurves.p"
-        print(pickleDir)
-        f=open(pickleDir,"r")
-        inData=pickle.load(f)
-        f.close()         
-        #x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
-def drawIndividualFigures(loopIDS,save=True):
-    #######################
-    ###draw grey Loops
-    ids=OperatingCurveIDs()
-    setFigures={}
-    setJetsonFigures={}
-    count=0
-    for i in ids:
-        setFigures[i]=plt.subplots(1,1)
-        setJetsonFigures[i]=plt.subplots(1,1)
-    for currentLoop in loopIDS:
-        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
-        f=open(pickleDir,"r")
-        inData=pickle.load(f)
-        f.close()   
-        x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
-        for figure in ids:
-            setFigures[figure][1].plot(x,inData["nFeatures"][figure],label=currentLoop,linewidth=0.9,alpha=0.7)
-            setFigures[figure][1].set_title(figure)
-            setFigures[figure][1].legend()
-            setFigures[figure][1].set_xlabel("Normalized Frame Number")
-            setFigures[figure][1].set_ylabel("Features Detected")
-        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
-        pickleDir=pickleDir[:pickleDir.find('.')] +"_jetsonCurves.p"
-        f=open(pickleDir,"r")
-        inData=pickle.load(f)
-        f.close()   
-        x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
-        for figure in ids:
-            setJetsonFigures[figure][1].plot(x,inData["nFeatures"][figure],label=currentLoop,linewidth=0.9,alpha=0.7)
-            setJetsonFigures[figure][1].set_title(figure)
-            setJetsonFigures[figure][1].legend()
-            setJetsonFigures[figure][1].set_xlabel("Normalized Frame Number")
-            setJetsonFigures[figure][1].set_ylabel("Features Detected")
-        count+=1
-    if(save):
-        print("saving to files")
-        fname=currentDirectories
-        for f in setFigures:
-            fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+".png"
-            print(fname)
-            setFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
-        for f in setJetsonFigures:
-            fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+"JETSON.png"
-            print(fname)
-            setJetsonFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
-def drawSubFigures(loopIDS):
-
-    #######################
-    ###draw grey Loops
-    ids=OperatingCurveIDs()
-    figures,ax=plt.subplots(4,2)
-    #ax[2,2].set_visible(False)
-    ax[3,1].set_visible(False)
+    graphs={}
     
-    for currentLoop in loopIDS:
-        pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
-        f=open(pickleDir,"r")
-        inData=pickle.load(f)
-        f.close()   
-        x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
-        ax[0,0].plot(x,inData["nFeatures"]["0.8Maximum"])
-        ax[0,0].set_title("0.8Maximum")
-        ax[0,1].plot(x,inData["nFeatures"]["0.9Maximum"])
-        ax[0,1].set_title("0.9Maximum")
-        ax[1,0].plot(x,inData["nFeatures"]["Maximum"])
-        ax[1,0].set_title("Maximum")
-        ax[1,1].plot(x,inData["nFeatures"]["+Deviation"])
-        ax[1,1].set_title("+Deviation")
-        ax[2,0].plot(x,inData["nFeatures"]["Mean"])
-        ax[2,0].set_title("Mean")
-        ax[2,1].plot(x,inData["nFeatures"]["-Deviation"])
-        ax[2,1].set_title("-Deviation")
-        ax[3,0].plot(x,inData["nFeatures"]["Minimum"],label=currentLoop)
-        ax[3,0].set_title("Minimum")
-    ax[3,1].legend()
-    ax[3,1].set_xlabel("Normalized Frame Number")
-    ax[3,1].set_ylabel("Features Detected")
-def detailedFigure(loopID,save=True):
-    pickleDir=projectFolder.getCurvePickle(loopID,args.detectorType)
-    print("loading from: " +pickleDir)
-    f=open(pickleDir,"r")
-    inData=pickle.load(f)
-    f.close()
+    ##get all the image data
+    for i in ids:
+        graphs[i]=plt.subplots(1,1)
+    graphs["Jetson"]=plt.subplots(1,1) ##an additional graph drawn only on COmpareGraph from the jetson detection results
+    ####Jetson and Mean should be compared and ideally will follow closely
 
-    MarkSize=0.2
-    ##########
-    ###draw nFeatures and their Curves
-    ###############
-    fig, ax1=plt.subplots(1,1)
-    x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"]))
-    ax1.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
-    ax1.plot(x,inData["nFeatures"]["Minimum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-1],label="Minimum")
-    ax1.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-3],label="Mean")
-    ax1.fill_between(x, inData["nFeatures"]["-Deviation"],inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0.0,0.8), interpolate=True,label="Standard Deviation")
-
-    ax1.set_ylim(ymin=0.0)
-    ax1.set_ylabel("Number of features")
-    ax1.set_xlabel("Normalized Frame Number")
-    ax1.legend()
-
-    fig2, ax2=plt.subplots(1,1)
-   # ax2.fill_between(x, inData["nFeatures"]["Minimum"], inData["nFeatures"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
-    ax2.fill_between(x, inData["nFeatures"]["-Deviation"], inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
-
-    ax2.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
-    ax2.plot(x,inData["nFeatures"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
-    ax2.plot(x,inData["nFeatures"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
-    ax2.plot(x,inData["nFeatures"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
-    ax2.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
-
-    ax2.set_ylim(ymin=0.0)
-    ax2.set_ylabel("Number of features")
-    ax2.set_xlabel("Normalized Frame Number")
-
-    ax2.legend()
-    ########################
-    ###draw processing Time and their Curves
-    #######################
-    fig3, ax3=plt.subplots(1,1)
-    #ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
-    #ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
-
-    ax3.plot(x,inData["times"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
-    ax3.plot(x,inData["times"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
-    ax3.plot(x,inData["times"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
-    ax3.plot(x,inData["times"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
-    ax3.plot(x,inData["times"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
-    #ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
-    #ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
-    #ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
-    #ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
-
-    ax3.set_ylim(ymin=0.0)
-    ax3.set_ylabel("Processing Time (ms)")
-    ax3.set_xlabel("Normalized Frame Number")
-
-    ax3.legend()
+    for loop in loopIDS:
+        dataLists={}
+        for i in graphs.keys():
+            dataLists[i]=[]
+        FolderPath=projectFolder.getFeaturePath(loop,args.detectorType)
+        imgNames=os.listdir(FolderPath)
+        print(FolderPath)
+        ####create a list from the folder Structure
+        for fileName in range(0,len(imgNames)):
+            f=open(FolderPath+"/"+imgNames[fileName],"r")
+            inData=pickle.load(f)
+            f.close()    
+            # 'diffOther', 'diffTime', 'jetsonTime'  
+            for i in ids:
+                dataLists[i].append(inData["nFeatures"][i]) 
+            dataLists["Jetson"].append(inData["jetsonFeatures"][compareGraph])
+        x=np.linspace(0,1,len(imgNames))
+        for i in dataLists.keys():
+            graphs[i][1].plot(x,dataLists[i],label=loop,linewidth=0.9,alpha=0.7)
+    for i in graphs.keys():
+        graphs[i][1].set_title(i)
+        graphs[i][1].legend()
+        graphs[i][1].set_xlabel("Normalized Frame Number")
+        graphs[i][1].set_ylabel("Features Detected")     
     if(save):
-        fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_time.png"
-        fig3.savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
-#####
-loops=args.loopIDs.split(",")
+        for i in graphs.keys():
+           fname=currentDirectories["RootOut"]+"/"+args.detectorType+i.replace(".","_")+".png" 
+           graphs[i][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)  
+  
 
-####
-##for now
-####
-#drawJetsonFigures(loops)
+def drawProcessingTime(loopID,save=True):
+
+    graphs={}
+    dataLists={}
+    graphs["Diff"]=plt.subplots(1,1)
+    graphs["time"]=plt.subplots(1,1)
+    graphs["JetsonTime"]=plt.subplots(1,1)
+    for i in graphs.keys():
+        dataLists[i]={}
+        for j in OperatingCurveIDs():
+            dataLists[i][j]=[]
+
+    FolderPath=projectFolder.getFeaturePath(loopID,args.detectorType)
+    imgNames=os.listdir(FolderPath)
+    print(FolderPath)
+            ####create a list from the folder Structure
+    for fileName in range(0,len(imgNames)):
+        f=open(FolderPath+"/"+imgNames[fileName],"r")
+        inData=pickle.load(f)
+        f.close() 
+        for i in OperatingCurveIDs():
+            dataLists["time"][i].append(inData["times"][i])
+            dataLists["JetsonTime"][i].append(inData["jetsonTimes"][i])
+            dataLists["Diff"][i].append((dataLists["time"][i][-1]*100.0)/dataLists["JetsonTime"][i][-1])
+
+    x=np.linspace(0,1,len(imgNames))
+    graphs["Diff"][1].plot(x,dataLists["Diff"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+    graphs["Diff"][1].plot(x,dataLists["Diff"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+    graphs["Diff"][1].plot(x,dataLists["Diff"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+    graphs["Diff"][1].plot(x,dataLists["Diff"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+    graphs["Diff"][1].plot(x,dataLists["Diff"]["Mean"], linewidth=0.7, c=colours[3],label="+Deviation")
+
+    graphs["Diff"][1].set_ylabel("Processing Time Ratio")
+    graphs["Diff"][1].set_xlabel("Normalized Frame Number")
+    graphs["Diff"][1].set_title("Ratio of i7 to Jetson Processing Time")
+    graphs["Diff"][1].legend()
+
+    graphs["time"][1].plot(x,dataLists["time"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+    graphs["time"][1].plot(x,dataLists["time"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+    graphs["time"][1].plot(x,dataLists["time"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+    graphs["time"][1].plot(x,dataLists["time"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+    graphs["time"][1].plot(x,dataLists["time"]["Mean"], linewidth=0.7, c=colours[3],label="+Deviation")
+
+    graphs["time"][1].set_ylabel("Time (ms)")
+    graphs["time"][1].set_xlabel("Normalized Frame Number")
+    graphs["time"][1].set_title("i7 Processing Time")
+    graphs["time"][1].legend()
 
 
-if(len(loops)>1):
-    drawIndividualFigures(loops)
-    #drawSubFigures(loops)
-    detailedFigure(loops[0])
-    pass
-else:
-    drawIndividualFigures(loops)
-    detailedFigure(loops[0])
-    pass
+    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["Mean"], linewidth=0.7, c=colours[3],label="+Deviation")
+
+    graphs["JetsonTime"][1].set_ylabel("Time (ms)")
+    graphs["JetsonTime"][1].set_xlabel("Normalized Frame Number")
+    graphs["JetsonTime"][1].set_title("Jetson TK1 Processing Time")
+    graphs["JetsonTime"][1].legend()
+
+    if(save):
+        for i in graphs.keys():
+           fname=currentDirectories["RootOut"]+"/"+args.detectorType+i+".png" 
+           graphs[i][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)  
+
+#     if(save):
+#         fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_time.png"
+#         fig3.savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)  
+#     ax1.set_ylim(ymin=0.0)
+#     ax1.set_ylabel("Number of features")
+#     ax1.set_xlabel("Normalized Frame Number")
+#     ax1.legend()
+#     ax3.plot(x,inData["times"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+#     ax3.plot(x,inData["times"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+#     ax3.plot(x,inData["times"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+#     ax3.plot(x,inData["times"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+#     ax3.plot(x,inData["times"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
+#     #ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+#     #ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+#     #ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+#     #ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
+
+
+
+#     print("loading from: " +pickleDir)
+#     f=open(pickleDir,"r")
+#     inData=pickle.load(f)
+#     f.close()
+
+#     MarkSize=0.2
+#     ##########
+#     ###draw nFeatures and their Curves
+#     ###############
+#     fig, ax1=plt.subplots(1,1)
+#     x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"]))
+#     ax1.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+#     ax1.plot(x,inData["nFeatures"]["Minimum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-1],label="Minimum")
+#     ax1.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-3],label="Mean")
+#     ax1.fill_between(x, inData["nFeatures"]["-Deviation"],inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0.0,0.8), interpolate=True,label="Standard Deviation")
+
+#     ax1.set_ylim(ymin=0.0)
+#     ax1.set_ylabel("Number of features")
+#     ax1.set_xlabel("Normalized Frame Number")
+#     ax1.legend()
+
+#     fig2, ax2=plt.subplots(1,1)
+#    # ax2.fill_between(x, inData["nFeatures"]["Minimum"], inData["nFeatures"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+#     ax2.fill_between(x, inData["nFeatures"]["-Deviation"], inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
+
+#     ax2.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+#     ax2.plot(x,inData["nFeatures"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+#     ax2.plot(x,inData["nFeatures"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+#     ax2.plot(x,inData["nFeatures"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+#     ax2.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
+
+#     ax2.set_ylim(ymin=0.0)
+#     ax2.set_ylabel("Number of features")
+#     ax2.set_xlabel("Normalized Frame Number")
+
+#     ax2.legend()
+#     ########################
+#     ###draw processing Time and their Curves
+#     #######################
+#     fig3, ax3=plt.subplots(1,1)
+#     #ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+#     #ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
+
+#     ax3.plot(x,inData["times"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+#     ax3.plot(x,inData["times"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+#     ax3.plot(x,inData["times"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+#     ax3.plot(x,inData["times"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+#     ax3.plot(x,inData["times"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
+#     #ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+#     #ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+#     #ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+#     #ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
+
+#     ax3.set_ylim(ymin=0.0)
+#     ax3.set_ylabel("Processing Time (ms)")
+#     ax3.set_xlabel("Normalized Frame Number")
+
+#     ax3.legend()
+#     if(save):
+#         fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_time.png"
+#         fig3.savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)   
+
+# def drawJetsonFigures(loopIDS,save=True):
+#     #######################
+#     ###draw grey Loops
+#     ids=OperatingCurveIDs()
+#     setFigures={}
+#     count=0
+#     for i in ids:
+#         setFigures[i]=plt.subplots(1,1)
+#     for currentLoop in loopIDS:
+#         pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+#         pickleDir=pickleDir[:pickleDir.find('.')] +"_jetsonCurves.p"
+#         print(pickleDir)
+#         f=open(pickleDir,"r")
+#         inData=pickle.load(f)
+#         f.close()         
+#         #x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+# def drawIndividualFigures(loopIDS,save=True):
+#     #######################
+#     ###draw grey Loops
+#     ids=OperatingCurveIDs()
+#     setFigures={}
+#     setJetsonFigures={}
+#     count=0
+#     for i in ids:
+#         setFigures[i]=plt.subplots(1,1)
+#         setJetsonFigures[i]=plt.subplots(1,1)
+#     for currentLoop in loopIDS:
+#         pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+#         f=open(pickleDir,"r")
+#         inData=pickle.load(f)
+#         f.close()   
+#         x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+#         for figure in ids:
+#             setFigures[figure][1].plot(x,inData["nFeatures"][figure],label=currentLoop,linewidth=0.9,alpha=0.7)
+#             setFigures[figure][1].set_title(figure)
+#             setFigures[figure][1].legend()
+#             setFigures[figure][1].set_xlabel("Normalized Frame Number")
+#             setFigures[figure][1].set_ylabel("Features Detected")
+#         pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+#         pickleDir=pickleDir[:pickleDir.find('.')] +"_jetsonCurves.p"
+#         f=open(pickleDir,"r")
+#         inData=pickle.load(f)
+#         f.close()   
+#         x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+#         for figure in ids:
+#             setJetsonFigures[figure][1].plot(x,inData["nFeatures"][figure],label=currentLoop,linewidth=0.9,alpha=0.7)
+#             setJetsonFigures[figure][1].set_title(figure)
+#             setJetsonFigures[figure][1].legend()
+#             setJetsonFigures[figure][1].set_xlabel("Normalized Frame Number")
+#             setJetsonFigures[figure][1].set_ylabel("Features Detected")
+#         count+=1
+#     if(save):
+#         print("saving to files")
+#         fname=currentDirectories
+#         for f in setFigures:
+#             fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+".png"
+#             print(fname)
+#             setFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
+#         for f in setJetsonFigures:
+#             fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_"+f.replace(".","_")+"JETSON.png"
+#             print(fname)
+#             setJetsonFigures[f][0].savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
+# def drawSubFigures(loopIDS):
+
+#     #######################
+#     ###draw grey Loops
+#     ids=OperatingCurveIDs()
+#     figures,ax=plt.subplots(4,2)
+#     #ax[2,2].set_visible(False)
+#     ax[3,1].set_visible(False)
+    
+#     for currentLoop in loopIDS:
+#         pickleDir=projectFolder.getCurvePickle(currentLoop,args.detectorType)
+#         f=open(pickleDir,"r")
+#         inData=pickle.load(f)
+#         f.close()   
+#         x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"])) 
+#         ax[0,0].plot(x,inData["nFeatures"]["0.8Maximum"])
+#         ax[0,0].set_title("0.8Maximum")
+#         ax[0,1].plot(x,inData["nFeatures"]["0.9Maximum"])
+#         ax[0,1].set_title("0.9Maximum")
+#         ax[1,0].plot(x,inData["nFeatures"]["Maximum"])
+#         ax[1,0].set_title("Maximum")
+#         ax[1,1].plot(x,inData["nFeatures"]["+Deviation"])
+#         ax[1,1].set_title("+Deviation")
+#         ax[2,0].plot(x,inData["nFeatures"]["Mean"])
+#         ax[2,0].set_title("Mean")
+#         ax[2,1].plot(x,inData["nFeatures"]["-Deviation"])
+#         ax[2,1].set_title("-Deviation")
+#         ax[3,0].plot(x,inData["nFeatures"]["Minimum"],label=currentLoop)
+#         ax[3,0].set_title("Minimum")
+#     ax[3,1].legend()
+#     ax[3,1].set_xlabel("Normalized Frame Number")
+#     ax[3,1].set_ylabel("Features Detected")
+# def detailedFigure(loopID,save=True):
+#     pickleDir=projectFolder.getCurvePickle(loopID,args.detectorType)
+#     print("loading from: " +pickleDir)
+#     f=open(pickleDir,"r")
+#     inData=pickle.load(f)
+#     f.close()
+
+#     MarkSize=0.2
+#     ##########
+#     ###draw nFeatures and their Curves
+#     ###############
+#     fig, ax1=plt.subplots(1,1)
+#     x=np.linspace(0,1,len(inData["nFeatures"]["Maximum"]))
+#     ax1.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+#     ax1.plot(x,inData["nFeatures"]["Minimum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-1],label="Minimum")
+#     ax1.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[-3],label="Mean")
+#     ax1.fill_between(x, inData["nFeatures"]["-Deviation"],inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0.0,0.8), interpolate=True,label="Standard Deviation")
+
+#     ax1.set_ylim(ymin=0.0)
+#     ax1.set_ylabel("Number of features")
+#     ax1.set_xlabel("Normalized Frame Number")
+#     ax1.legend()
+
+#     fig2, ax2=plt.subplots(1,1)
+#    # ax2.fill_between(x, inData["nFeatures"]["Minimum"], inData["nFeatures"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+#     ax2.fill_between(x, inData["nFeatures"]["-Deviation"], inData["nFeatures"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
+
+#     ax2.plot(x,inData["nFeatures"]["Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[0],label="Maximum")
+#     ax2.plot(x,inData["nFeatures"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+#     ax2.plot(x,inData["nFeatures"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+#     ax2.plot(x,inData["nFeatures"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+#     ax2.plot(x,inData["nFeatures"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
+
+#     ax2.set_ylim(ymin=0.0)
+#     ax2.set_ylabel("Number of features")
+#     ax2.set_xlabel("Normalized Frame Number")
+
+#     ax2.legend()
+#     ########################
+#     ###draw processing Time and their Curves
+#     #######################
+#     fig3, ax3=plt.subplots(1,1)
+#     #ax3.fill_between(x, inData["times"]["Minimum"], inData["times"]["Maximum"], alpha=0.4, facecolor=(0.7,0.0,0.1), interpolate=True)
+#     #ax3.fill_between(x, inData["times"]["-Deviation"], inData["times"]["+Deviation"], alpha=0.4, facecolor=(0.5,0,0.8), interpolate=True)
+
+#     ax3.plot(x,inData["times"]["Maximum"], linewidth=0.7, c=colours[0],label="Maximum")
+#     ax3.plot(x,inData["times"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
+#     ax3.plot(x,inData["times"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
+#     ax3.plot(x,inData["times"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
+#     ax3.plot(x,inData["times"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
+#     #ax3.plot(x,inData["times"]["0.9Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[1],label="0.9Maximum")
+#     #ax3.plot(x,inData["times"]["0.8Maximum"], mew=0.1, marker='o',markersize=MarkSize, c=colours[2],label="0.8Maximum")
+#     #ax3.plot(x,inData["times"]["+Deviation"], mew=0.1, marker='o',markersize=MarkSize, c=colours[3],label="+Deviation")
+#     #ax3.plot(x,inData["times"]["Mean"], mew=0.1, marker='o',markersize=MarkSize, c=colours[4],label="Mean")
+
+#     ax3.set_ylim(ymin=0.0)
+#     ax3.set_ylabel("Processing Time (ms)")
+#     ax3.set_xlabel("Normalized Frame Number")
+
+#     ax3.legend()
+#     if(save):
+#         fname=currentDirectories["RootOut"]+"/"+args.detectorType+"_time.png"
+#         fig3.savefig(fname, dpi=400, bbox_inches='tight',pad_inches=0)
+# #####
+# loops=args.loopIDs.split(",")
+
+# if(len(loops)>1):
+#     drawIndividualFigures(loops)
+#     #drawSubFigures(loops)
+#     detailedFigure(loops[0])
+#     pass
+# else:
+#     drawIndividualFigures(loops)
+#     detailedFigure(loops[0])
+#     pass
 
 
 
 
-#plt.show()
+# #plt.show()
+
+loops=args.loopID.split(",")
+drawFeatureFigures(loops)
+drawProcessingTime(loops[0])
+
+if(args.display!="False"):
+    plt.show()
 
 print("completed")
