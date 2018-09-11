@@ -108,7 +108,7 @@ def drawProcessingTime(loopID,save=True):
     graphs["Diff"][1].plot(x,dataLists["Diff"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
     graphs["Diff"][1].plot(x,dataLists["Diff"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
     graphs["Diff"][1].plot(x,dataLists["Diff"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
-    graphs["Diff"][1].plot(x,dataLists["Diff"]["Mean"], linewidth=0.7, c=colours[3],label="+Deviation")
+    graphs["Diff"][1].plot(x,dataLists["Diff"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
 
     graphs["Diff"][1].set_ylabel("Processing Time Ratio")
     graphs["Diff"][1].set_xlabel("Normalized Frame Number")
@@ -119,7 +119,7 @@ def drawProcessingTime(loopID,save=True):
     graphs["time"][1].plot(x,dataLists["time"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
     graphs["time"][1].plot(x,dataLists["time"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
     graphs["time"][1].plot(x,dataLists["time"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
-    graphs["time"][1].plot(x,dataLists["time"]["Mean"], linewidth=0.7, c=colours[3],label="+Deviation")
+    graphs["time"][1].plot(x,dataLists["time"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
 
     graphs["time"][1].set_ylabel("Time (ms)")
     graphs["time"][1].set_xlabel("Normalized Frame Number")
@@ -131,7 +131,7 @@ def drawProcessingTime(loopID,save=True):
     graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["0.9Maximum"], linewidth=0.7, c=colours[1],label="0.9Maximum")
     graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["0.8Maximum"], linewidth=0.7, c=colours[2],label="0.8Maximum")
     graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["+Deviation"], linewidth=0.7, c=colours[3],label="+Deviation")
-    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["Mean"], linewidth=0.7, c=colours[3],label="+Deviation")
+    graphs["JetsonTime"][1].plot(x,dataLists["JetsonTime"]["Mean"], linewidth=0.7, c=colours[4],label="Mean")
 
     graphs["JetsonTime"][1].set_ylabel("Time (ms)")
     graphs["JetsonTime"][1].set_xlabel("Normalized Frame Number")
