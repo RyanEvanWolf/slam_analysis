@@ -1,0 +1,147 @@
+#!/usr/bin/env python 
+
+import rospy
+import pickle
+from front_end.motion import *
+import bumblebee.utils as butil
+import numpy as np
+import matplotlib.pyplot as plt
+import tf.transformations
+import os
+
+from geometry_msgs.msg import TransformStamped,Transform,Quaternion,Vector3,Point
+from sensor_msgs.msg import CameraInfo,RegionOfInterest,Image
+from visualization_msgs.msg import Marker
+from cv_bridge import CvBridge
+
+import copy
+import time
+import datetime
+import argparse
+
+parser =argparse.ArgumentParser()
+parser.add_argument("root_dir",help="absolute directory to the simulated output.")
+parser.add_argument("--type",help="The type of simulation to analyse. Either straight or steering.",default="straight",type=str)
+parser.add_argument("--speed",help="The speed category to analyse, is either Slow, Medium, or Fast",default="Slow",type=str)
+args,unknown=parser.parse_known_args() 
+
+camFile=butil.getPickledObject(args.root_dir+"/camera.p")
+
+
+DataDirectory=args.root_dir+"/"+args.speed+"/"+args.type+"/Data"
+DataFilesList=os.listdir(DataDirectory)
+
+HFiles=[]
+
+for j in DataFilesList:
+    HFiles.append(butil.getPickledObject(DataDirectory+"/"+j))
+
+print(HFiles[0].keys())
+
+rospy.init_node("data_validation")
+cvb = CvBridge()
+#######################
+####Generate the transform tree for the simulation
+#######################
+### World-> baselink
+#                   ->La
+#                           ->Ra
+#                   ->Lb
+#                           ->Rb                      
+
+transformMessages=[]
+
+
+displayConversion=TransformStamped()
+displayConversion.header.frame_id="world"
+displayConversion.child_frame_id="base_link"
+
+displayOffset=np.zeros((3,1))
+rotation=butil.createHomog(butil.composeR(0,-90,0),displayOffset)
+displayConversion.transform=butil.msgFromTransform(rotation)
+
+
+##la
+
+Lmsg=TransformStamped()
+Lmsg.header.frame_id="base_link"
+Lmsg.child_frame_id="La"
+
+Lmsg.transform=butil.msgFromTransform(butil.createHomog())
+
+Rmsg=TransformStamped()
+Rmsg.header.frame_id="La"
+Rmsg.child_frame_id="Ra"
+
+Tx=np.zeros((3,1),dtype=np.float64)
+Tx[0,0]=-1.0*camFile["Pr"][0,3]/camFile["f"]
+Rmsg.transform=butil.msgFromTransform(butil.createHomog(T=Tx))
+
+transformMessages.append(displayConversion)
+transformMessages.append(Lmsg)
+transformMessages.append(Rmsg)
+
+motionMsg=TransformStamped()
+motionMsg.header.frame_id="La"
+motionMsg.child_frame_id="Lb"
+
+motionMsg.transform=butil.msgFromTransform(HFiles[0]["H"])
+
+RbMsg=copy.deepcopy(Rmsg)
+RbMsg.header.frame_id="Lb"
+RbMsg.child_frame_id="Rb"
+
+transformMessages.append(motionMsg)
+
+transformMessages.append(RbMsg)
+
+######
+##create Point Cloud
+######
+
+###display it in frame A
+
+pClouds=[]
+
+for j in HFiles:
+    currentMarker=Marker()
+    currentMarker.header.frame_id="La"
+    currentMarker.action=currentMarker.ADD
+    currentMarker.scale.x=0.1
+    currentMarker.scale.y=0.1
+    currentMarker.scale.z=0.1
+    currentMarker.id=1
+    currentMarker.type=7
+    currentMarker.lifetime=rospy.Duration(5)
+    currentMarker.color.a=1
+    currentMarker.color.r=1
+    currentMarker.color.g=1
+    currentMarker.color.b=1
+    for PtIndex in j["Points"]:
+        newP=Point()
+        newP.x=j["Points"][PtIndex].Data["Xa"][0,0]
+        newP.y=j["Points"][PtIndex].Data["Xa"][1,0]
+        newP.z=j["Points"][PtIndex].Data["Xa"][2,0]
+        currentMarker.points.append(newP)
+    pClouds.append(currentMarker)
+
+pub=tf.TransformBroadcaster()
+rate=rospy.Rate(15)
+startTime=time.time()
+pub2 = rospy.Publisher("currentPoints", Marker, queue_size = 100)
+count=0
+while(not rospy.is_shutdown()):
+    tt=rospy.Time.now()
+    for i in transformMessages:
+        i.header.stamp=tt
+        pub.sendTransformMessage(i)
+    if(time.time()-startTime>3):
+        startTime=time.time()
+        count+=1
+        if(count>=len(HFiles)):
+            count=0
+        print(count)
+        print(HFiles[count]["H"])
+        motionMsg.transform=butil.msgFromTransform(HFiles[count]["H"])
+    pub2.publish(pClouds[count])
+    rate.sleep()

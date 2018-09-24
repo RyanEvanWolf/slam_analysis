@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+import numpy as np 
+import math
+import time
+
+import pickle
+
+import cv2
+import numpy as np
+import rospy
+from cv_bridge import CvBridge
+
+import tf.transformations
+from bumblebee_calibration import *
+from geometry_msgs.msg import TransformStamped,Transform,Quaternion,Vector3
+calibrationDirectory="/home/ryan/Calibration"
+extrin = pickle.load(open(calibrationDirectory + "/extrinsicCalibration.p", "rb"))
+print("Camera Extrinsics Loaded")
+
+
+print("hello")
+
