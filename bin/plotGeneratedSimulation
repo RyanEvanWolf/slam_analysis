@@ -17,7 +17,55 @@ sty.use("seaborn")
 
 a=simulationAnalyser("/media/ryan/EXTRA/output/Simulation")
 #print(a.getSingleMotionStats(a.getMotionNames()[0]))
-print(a.getGroupMotionStats())
+data=a.getGroupMotionStats()
+###############
+#########
+###draw the noisy simulation violin
+
+figNoiseT,axNoiseT=plt.subplots(nrows=1, ncols=1)
+axNoiseT.violinplot(data["noise"]["X"]["400"]["ideal"],showmeans=True,showextrema=False,showmedians=False,widths=0.2)
+
+plt.plot(data["noise"]["X"]["400"]["ideal"])
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##################
 # ###plot the simulated Data statistics
 # ##################
@@ -125,6 +173,7 @@ print(a.getGroupMotionStats())
 #     ax1.set_ylabel("Angle (deg)")
 
 #     return fig,ax1,ax2
+
 
 # parser =argparse.ArgumentParser()
 # parser.add_argument("worldFolder")
