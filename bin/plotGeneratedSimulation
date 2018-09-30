@@ -5,6 +5,11 @@ import pickle
 from front_end.motion import *
 import numpy as np
 import matplotlib.pyplot as plt 
+import matplotlib.patches as mpatches
+
+import copy
+
+
 from front_end.motion import *
 from front_end.analysis import simulationAnalyser
 
@@ -15,20 +20,153 @@ import os
 import statistics
 sty.use("seaborn")
 
+
+
+############
+###display Settings
+############
+
+
+def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
+    print(len(colours))
+    operatingCurves=series1.keys()
+    if(sortByAlpha):
+        keyLabels=sorted(series1[operatingCurves[0]].keys())
+        keyLabels.remove("ideal")
+        keyLabels=["ideal"]+keyLabels
+    else:
+        floatKeyLabels=copy.deepcopy(series1[operatingCurves[0]].keys())
+        floatKeyLabels.remove("ideal")
+        floatKeyLabels=sorted([int(i) for i in floatKeyLabels])#cast then to floats and sort them
+        floatKeyLabels=[str(i) for i in floatKeyLabels]##cast them back to strings (correct keys)
+        keyLabels=["ideal"]+floatKeyLabels
+    print(keyLabels)
+
+    percentageSpace=0.2
+    SPACE_WIDTH=percentageSpace/(len(operatingCurves)+1)
+    MAX_VIOLIN_WIDTH=(1-percentageSpace)/len(operatingCurves)
+
+    violinOffset=MAX_VIOLIN_WIDTH/2 +SPACE_WIDTH
+    violinSpacing=MAX_VIOLIN_WIDTH +SPACE_WIDTH
+    #################
+    ###draw the first set
+    fig,(ax1,ax2,ax3)=plt.subplots(nrows=3, ncols=1,sharex=True,squeeze=True)
+    print(colours)
+    print(keyLabels)
+    print(operatingCurves)
+    for i in range(0,len(operatingCurves)):
+        axLabel=operatingCurves[i]
+        print(axLabel)
+        xStart=2*i+violinOffset+i*violinSpacing
+        for j in range(0,len(keyLabels)):
+            currentSimName=keyLabels[j]
+            currentCol=colours[j]
+            data=([series1[axLabel][currentSimName],
+                series2[axLabel][currentSimName],
+                series3[axLabel][currentSimName]])
+            dispAxis=[ax1,ax2,ax3]
+            for dataIndex in range(0,len(data)):
+                d=data[dataIndex]
+                currentAxis=dispAxis[dataIndex]
+                if(np.count_nonzero(d)>5):
+                    q1=np.percentile(d,0.25)
+                    q3=np.percentile(d,0.75)
+                    avg=np.mean(d)
+                    dv=np.std(d)
+                    dvTop=avg+dv
+                    dvMin=np.clip(avg-dv,0,avg)
+                    r=currentAxis.violinplot(d,[xStart+j*violinSpacing],showmeans=False,showextrema=False,showmedians=False,widths=MAX_VIOLIN_WIDTH)
+                    r["bodies"][0].set_facecolor(currentCol)
+                    currentAxis.scatter([xStart+j*violinSpacing],avg, marker='o', color=(0,0,0,0.3),s=15, zorder=3)
+                    currentAxis.vlines([xStart+j*violinSpacing], dvTop, dvMin, color='k', linestyle='-', lw=1)#MAX_VIOLIN_WIDTH/5)
+                else:
+                    avg=np.mean(d)
+                    dv=np.std(d)
+                    dvTop=avg+dv
+                    dvMin=np.clip(avg-dv,0,avg)
+                    currentAxis.scatter([xStart+j*violinSpacing],avg, marker='o', color=(0,0,0,0.3),s=15, zorder=3)
+                    currentAxis.vlines([xStart+j*violinSpacing], dvTop, dvMin, color='k', linestyle='-', lw=1)#MAX_VIOLIN_WIDTH/5)
+    patch=[]
+    for j in range(0,len(keyLabels)):
+        patch.append(mpatches.Patch(color=colours[j]) )
+    box = ax1.get_position()
+    ax1.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    box = ax2.get_position()
+    ax2.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    box = ax3.get_position()
+    ax3.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    # Put a legend to the right of the current axis
+    ax2.legend(patch,keyLabels,loc='center left', bbox_to_anchor=(1, 0.5))
+
+    labelPos=[]
+    for j in range(0,len(operatingCurves)):
+        labelPos.append(2*j+violinOffset+j*violinSpacing+0.5)
+    ax1.set_xticks(labelPos)
+    ax1.set_xticklabels(operatingCurves)
+
+
+    return fig,ax1,ax2,ax3
+
 a=simulationAnalyser("/media/ryan/EXTRA/output/Simulation")
 #print(a.getSingleMotionStats(a.getMotionNames()[0]))
+noiseColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(1,0.6,0.4,0.7),(0.7,0.3,0.0,0.7),(0.8,0.2,0,0.7),(1,0,0.7,0.7)]
 data=a.getGroupMotionStats()
 ###############
 #########
 ###draw the noisy simulation violin
 
-figNoiseT,axNoiseT=plt.subplots(nrows=1, ncols=1)
-axNoiseT.violinplot(data["noise"]["X"]["400"]["ideal"],showmeans=True,showextrema=False,showmedians=False,widths=0.2)
+fT,aX,aY,aZ=drawErrorViolin(data["noise"]["X"],data["noise"]["Y"],data["noise"]["Z"],noiseColours)
 
-plt.plot(data["noise"]["X"]["400"]["ideal"])
+aX.set_ylabel("X (mm)")
+aY.set_ylabel("Y (mm)")
+aZ.set_ylabel("Z (mm)")
+
+aZ.set_xlabel("Number of Features")
+
+fT.suptitle("Absolute Translation Error")
+
+
+fR,aR,aP,aY=drawErrorViolin(data["noise"]["Roll"],data["noise"]["Pitch"],data["noise"]["Yaw"],noiseColours)
+
+aR.set_ylabel("Roll (degrees)")
+aP.set_ylabel("Pitch (degress)")
+aY.set_ylabel("Yaw (degress)")
+
+aY.set_xlabel("Number of Features")
+
+fR.suptitle("Absolute Rotation Error")
+##############################
+###draw the outlier 
+#############################
+
+outlierColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(0.7,0.3,0.0,0.7),(1,0,0.7,0.7)]
+
+fTo,aXo,aYo,aZo=drawErrorViolin(data["outlier"]["X"],data["outlier"]["Y"],data["outlier"]["Z"],outlierColours,False)
+
+aXo.set_ylabel("X (mm)")
+aYo.set_ylabel("Y (mm)")
+aZo.set_ylabel("Z (mm)")
+
+aZo.set_xlabel("Number of Features")
+
+fTo.suptitle("Outlier Absolute Translation Error")
+
+
+fRo,aRo,aPo,aYo=drawErrorViolin(data["outlier"]["Roll"],data["outlier"]["Pitch"],data["outlier"]["Yaw"],outlierColours,False)
+
+aRo.set_ylabel("Roll (degrees)")
+aPo.set_ylabel("Pitch (degress)")
+aYo.set_ylabel("Yaw (degress)")
+
+aYo.set_xlabel("Number of Features")
+
+fRo.suptitle("Outlier Absolute Rotation Error")
+
+
+
+
+
 plt.show()
-
-
 
 
 
