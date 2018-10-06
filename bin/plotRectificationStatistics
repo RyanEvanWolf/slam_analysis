@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+import pickle
+import argparse
+import copy
+import bumblebee.utils as butil
+import matplotlib.pyplot as plt
+import matplotlib.style as sty
+sty.use("seaborn")
+
+
+data=butil.getPickledObject("/home/ryan/DATA_A/jetson_timing.p")
+data2=butil.getPickledObject("/home/ryan/DATA_A/i7_timing.p")
+
+combined =[]
+combined2=[]
+
+for i in range(0,len(data["Debayer"])):
+    combined.append(data["Debayer"][i]+data["Rectification"][i]+data["intRectification"][i])
+    combined2.append(data2["Debayer"][i]+data2["Rectification"][i]+data2["intRectification"][i])
+plt.plot(combined,label="jetson")
+plt.xlabel("image Number")
+plt.ylabel("processing time (ms)")
+plt.title("Combined rectificiation and debayer time")
+plt.plot(combined2,label="i7")
+
+
+plt.legend()
+plt.show()
