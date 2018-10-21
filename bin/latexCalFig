@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+import rospy
+import sys
+import os
+import numpy as np
+import cv2
+import random
+import scipy.stats.mstats as stat
+
+import matplotlib.pyplot as plt
+import matplotlib.style as sty
+from bumblebee.calibration import *
+from bumblebee.drawing import *
+import bumblebee.utils as butil
+sty.use("seaborn")
+import pickle
+import copy
+import argparse
+
+rootDir="/home/ryan"
+stereoCalDirectories=["CalibrationA","CalibrationB","CalibrationC"]
+filteredOut=["filteredOutputA","filteredOutputB","filteredOutputC"]
+keyNames=["$Cal_A$","$Cal_B$","$Cal_C$"]
+colours=[(1,0,0),(0,1,0),(0,0,1)]
+
+
+
+##########################
+###Get the initial RMS error and draw the threshold values on it
+
+unfilteredData=butil.getPickledObject(rootDir+"/CalibrationInput/singleCalibrationData.p")
+intialRMS=[]
+for j in range(len(unfilteredData.LeftPoints)):
+    intialRMS.append((unfilteredData.getSingleImageRMS(j)[0]+unfilteredData.getSingleImageRMS(j)[1])/2.0)
+
+fig, ax1 = plt.subplots()
+y, x, _ =ax1.hist(intialRMS,25,color=(0,0,0),alpha=0.4,edgecolor=(0,0,0))
+ax1.set_xlabel("Unfiltered combined RMS error")
+ax1.set_ylabel("Total Images")
+
+ax2=ax1.twinx()
+mu,sigma = norm.fit(intialRMS)
+x_pdf = np.linspace(0,np.max(intialRMS), 100)
+y_pdf=norm.pdf(x_pdf, mu, sigma)
+ax2.plot(x_pdf,y_pdf,color=(0,0,0),linestyle='dashed')
+ax2.set_ylabel('Probability Density Function')
+ax2.grid(False)
+ax1.axvline(x=1.0, linestyle='--',color=(1,0,0),label="$T_{Calibration}=1.0$")
+ax1.axvline(x=1.1, linestyle='--',color=(0,1,0),label="$T_{Calibration}=1.1$")
+ax1.axvline(x=1.2, linestyle='--',color=(0,0,1),label="$T_{Calibration}=1.2$")
+
+ax1.legend()
+
+fig.savefig("/home/ryan/InputErrorFigure.png",format='png',dpi=200)
+#####################
+###get the stereo input for each thresholded calibration and plot them on the same Image
+
+rmsErrors=[]
+
+for i in filteredOut:
+    data=butil.getPickledObject(rootDir+"/"+i+"/singleCalibrationData.p")
+    combined=[]
+
+    for j in range(len(data.LeftPoints)):
+        # leftImagesAvgRms.append(unfilteredData.getSingleImageRMS(i)[0])
+        # rightImagesAvgRms.append(unfilteredData.getSingleImageRMS(i)[1])
+        combined.append((data.getSingleImageRMS(j)[0]+data.getSingleImageRMS(j)[1])/2.0)
+    rmsErrors.append(combined)
+
+multipleErrorHist(rmsErrors,
+                    colours,keyNames,"Filtered combined average RMS error")
+
+def getImageEpiError(calibrationDirectory):
+    calibrationData=butil.getPickledObject(calibrationDirectory+"/StereoCalibration.p")
+    leftMapping = butil.getPickledObject(calibrationDirectory+ "/left_Map.p")
+    rightMapping = butil.getPickledObject(calibrationDirectory + "/right_Map.p")
+    ##list of list of found points by image, then by checkerboard position
+    leftFoundPoints=[]
+    rightFoundPoints=[]
+    epiError=[]
+    epiPolarError=0
+
+    print("Rectifying Images")
+    totalImagesFound=0
+    for fileName in calibrationData.inCalibrationData.imgName:
+        ##get images
+        fullImage=cv2.imread(calibrationData.inCalibrationData.meta.inDirectory+"/"+fileName,cv2.IMREAD_GRAYSCALE)
+        if(calibrationData.inCalibrationData.meta.debayer):
+            fullImage=cv2.cvtColor(fullImage,cv2.COLOR_BAYER_BG2GRAY)
+        leftImage = fullImage[fullImage.shape[0] / 2:fullImage.shape[0], 0:fullImage.shape[1]]
+        rightImage = fullImage[0:fullImage.shape[0] / 2, 0:fullImage.shape[1]]
+        ##rectify them
+        leftRectified=leftMapping.getRectifiedImage(leftImage)
+        rightRectified=rightMapping.getRectifiedImage(rightImage)
+
+        lFound, lCorners = cv2.findChessboardCorners(leftRectified, calibrationData.inCalibrationData.meta.getBoardSize(),
+                                                    cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)
+        rFound, rCorners = cv2.findChessboardCorners(rightRectified, calibrationData.inCalibrationData.meta.getBoardSize(),
+                                                    cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)
+
+        winSize = (7, 7)
+        zeroZone = (-1, -1)
+        if(lFound and rFound):
+            cv2.cornerSubPix(leftRectified, lCorners, winSize, zeroZone,
+                            (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 1000, 0.001))
+            cv2.cornerSubPix(rightRectified, rCorners, winSize, zeroZone,
+                            (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 1000, 0.001))
+            ##draw and save images
+            totalImagesFound+=1
+            RMSimage = 0
+            for i in range(len(lCorners)):
+                RMSimage+=np.power((lCorners[i]-rCorners[i])[0,1],2)
+                epiPolarError+=np.power((lCorners[i]-rCorners[i])[0,1],2)
+            RMSimage=np.sqrt(RMSimage/len(lCorners))
+            epiError.append(RMSimage)
+    else:
+        print("NO CHECKER")
+
+    return epiError
+
+multipleErrorHist([getImageEpiError(rootDir+"/"+stereoCalDirectories[0]),
+                    getImageEpiError(rootDir+"/"+stereoCalDirectories[1]),
+                    getImageEpiError(rootDir+"/"+stereoCalDirectories[2])],
+                    colours,keyNames,"Combined RMS epipolar error")
+
+plt.show()

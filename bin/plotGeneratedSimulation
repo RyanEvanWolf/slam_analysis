@@ -29,7 +29,9 @@ sty.use("seaborn")
 
 def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
     print(len(colours))
-    operatingCurves=series1.keys()
+    operatingCurves=sorted([int(i) for i in series1.keys()])
+    operatingCurves=[str(i) for i in operatingCurves]
+    print(operatingCurves)
     if(sortByAlpha):
         keyLabels=sorted(series1[operatingCurves[0]].keys())
         keyLabels.remove("ideal")
@@ -68,7 +70,7 @@ def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
             for dataIndex in range(0,len(data)):
                 d=data[dataIndex]
                 currentAxis=dispAxis[dataIndex]
-                if(np.count_nonzero(d)>5):
+                if(np.count_nonzero(d)>2):
                     q1=np.percentile(d,0.25)
                     q3=np.percentile(d,0.75)
                     avg=np.mean(d)
@@ -107,13 +109,14 @@ def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
 
     return fig,ax1,ax2,ax3
 
-a=simulationAnalyser("/media/ryan/EXTRA/output/Simulation")
+a=simulationAnalyser("/media/ryan/EXTRA/output/Simulation",extractionMethod="BA")
+# pclAnalysis=simulationAnalyser("/media/ryan/EXTRA/output/Simulation",extractionMethod="PCL)
 #print(a.getSingleMotionStats(a.getMotionNames()[0]))
 noiseColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(1,0.6,0.4,0.7),(0.7,0.3,0.0,0.7),(0.8,0.2,0,0.7),(1,0,0.7,0.7)]
 data=a.getGroupMotionStats()
-###############
-#########
-###draw the noisy simulation violin
+##############
+########
+##draw the noisy simulation violin
 
 fT,aX,aY,aZ=drawErrorViolin(data["noise"]["X"],data["noise"]["Y"],data["noise"]["Z"],noiseColours)
 

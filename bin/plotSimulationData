@@ -1,0 +1,171 @@
+#!/usr/bin/env python
+import math
+import time
+
+import pickle
+
+import cv2
+import numpy as np
+import rospy
+from cv_bridge import CvBridge
+import os
+
+
+from dataset.simulation import *
+from bumblebee.baseTypes import *
+from bumblebee.stereo import stereoCamera
+from bumblebee.utils import createDir,getPickledObject
+from bumblebee.drawing import *
+from bumblebee.motion import getMotion
+
+import statistics
+import matplotlib.pyplot as plt 
+import matplotlib.patches as mpatches
+sty.use("seaborn")
+
+rospy.init_node('motionSimulation')
+rootDir="/media/ryan/EXTRA/output/Simulation"
+simulationSpeeds=["Fast","Medium","Slow"]
+motionTypes=["straight"]
+cameraSettings=getPickledObject(rootDir+"/camera.p")
+
+#####
+##get all the files available
+####
+
+def getMotionAsList(baseDirectory):
+    motionFiles=os.listdir(baseDirectory+"/Data")    
+    x=[]
+    y=[]
+    z=[]
+    r=[]
+    p=[]
+    yaw=[]
+    for motionIndex in motionFiles:
+        currentFile=getPickledObject(baseDirectory+"/Data/"+motionIndex)
+def drawImages(baseDirectory):
+    motionFiles=os.listdir(baseDirectory+"/Data")
+    
+
+
+    for motionIndex in motionFiles:
+        currentFile=getPickledObject(baseDirectory+"/Data/"+motionIndex)
+        imageOutputDirectory=baseDirectory+"/Images/"+motionIndex[:-2]
+        
+        print("IDEAL IMAGES -   ")
+        for operatingCurve in currentFile.OperatingCurves.keys():
+            createDir(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL")
+            print(operatingCurve)
+            interF=currentFile.getIdealInterFrameEdge(operatingCurve)
+            trackImage=255*np.ones((cameraSettings["height"],
+                                    cameraSettings["width"],3),dtype=np.uint8)
+            drawROI(trackImage,cameraSettings["roi"])
+            plotTracks(trackImage,interF.getCurrentL(),interF.getPreviousL())
+
+            cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/lTracks.ppm",trackImage)
+            trackImage1=255*np.ones((cameraSettings["height"],
+                                    cameraSettings["width"],3),dtype=np.uint8)
+            drawROI(trackImage1,cameraSettings["roi"])
+            plotTracks(trackImage1,interF.getCurrentR(),interF.getPreviousR())
+            cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/rTracks.ppm",trackImage1)
+            
+            
+            epiPolar=255*np.ones((cameraSettings["height"],
+                                    2*cameraSettings["width"],3),dtype=np.uint8)                 
+            drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+
+            plotEpiPolar(epiPolar,interF.getCurrentL(),interF.getCurrentR())
+            cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/EpiTracksB.ppm",epiPolar)
+            epiPolar=255*np.ones((cameraSettings["height"],
+                                    2*cameraSettings["width"],3),dtype=np.uint8)                 
+            drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+
+            plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
+            cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/EpiTracksA.ppm",epiPolar)
+        print("GAUSSIAN")
+        noiseLevels=currentFile.Points[0]["Noise"].keys()
+        for operatingCurve in currentFile.OperatingCurves.keys():
+            ###########
+            ###left movement plot
+            idealF=currentFile.getIdealInterFrameEdge(operatingCurve)
+            OverallImage=255*np.ones((cameraSettings["height"],
+                                    cameraSettings["width"],3),dtype=np.uint8)
+            drawROI(OverallImage,cameraSettings["roi"])
+            for noise in noiseLevels:
+                outDirect=imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/Gaussian_"+noise
+                createDir(outDirect)
+                print(operatingCurve)
+                interF=currentFile.getNoisyInterFrameEdge(operatingCurve,noise)
+                trackImage=255*np.ones((cameraSettings["height"],
+                                        cameraSettings["width"],3),dtype=np.uint8)
+                drawROI(trackImage,cameraSettings["roi"])
+                plotTracks(trackImage,interF.getCurrentL(),interF.getPreviousL())
+
+                cv2.imwrite(outDirect+"/lTracks.ppm",trackImage)
+                trackImage1=255*np.ones((cameraSettings["height"],
+                                        cameraSettings["width"],3),dtype=np.uint8)
+                drawROI(trackImage1,cameraSettings["roi"])
+                plotTracks(trackImage1,interF.getCurrentR(),interF.getPreviousR())
+                cv2.imwrite(outDirect+"/rTracks.ppm",trackImage1)
+                
+                
+                epiPolar=255*np.ones((cameraSettings["height"],
+                                        2*cameraSettings["width"],3),dtype=np.uint8)                 
+                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+
+                plotEpiPolar(epiPolar,interF.getCurrentL(),interF.getCurrentR())
+                cv2.imwrite(outDirect+"/EpiTracksB.ppm",epiPolar)
+                epiPolar=255*np.ones((cameraSettings["height"],
+                                        2*cameraSettings["width"],3),dtype=np.uint8)                 
+                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+
+                plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
+                cv2.imwrite(outDirect+"/EpiTracksA.ppm",epiPolar)   
+                
+                plotTracks(OverallImage,idealF.getCurrentL(),interF.getCurrentL())
+            cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/leftImageGaussianCombined.ppm",OverallImage)
+        print("OUTLIER")
+        for operatingCurve in currentFile.OperatingCurves.keys():
+            ###########
+            ###left movement plot
+            idealF=currentFile.getIdealInterFrameEdge(operatingCurve)
+            OverallImage=255*np.ones((cameraSettings["height"],
+                                    cameraSettings["width"],3),dtype=np.uint8)
+            drawROI(OverallImage,cameraSettings["roi"])
+            for out in currentFile.OperatingCurves[operatingCurve][1].keys():
+                print(operatingCurve,out,len(currentFile.OperatingCurves[operatingCurve][0]),len(currentFile.OperatingCurves[operatingCurve][1][out]))
+                outDirect=imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/outlier_"+out
+                createDir(outDirect)
+                interF=currentFile.getOutlierInterFrameEdge(operatingCurve,out)
+                trackImage=255*np.ones((cameraSettings["height"],
+                                        cameraSettings["width"],3),dtype=np.uint8)
+                drawROI(trackImage,cameraSettings["roi"])
+                plotTracks(trackImage,interF.getCurrentL(),interF.getPreviousL())                
+                cv2.imwrite(outDirect+"/lTracks.ppm",trackImage)
+                trackImage1=255*np.ones((cameraSettings["height"],
+                                        cameraSettings["width"],3),dtype=np.uint8)
+                drawROI(trackImage1,cameraSettings["roi"])
+                plotTracks(trackImage1,interF.getCurrentR(),interF.getPreviousR())
+                cv2.imwrite(outDirect+"/rTracks.ppm",trackImage1)
+                
+                
+                epiPolar=255*np.ones((cameraSettings["height"],
+                                        2*cameraSettings["width"],3),dtype=np.uint8)                 
+                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+
+                plotEpiPolar(epiPolar,interF.getCurrentL(),interF.getCurrentR())
+                cv2.imwrite(outDirect+"/EpiTracksB.ppm",epiPolar)
+                epiPolar=255*np.ones((cameraSettings["height"],
+                                        2*cameraSettings["width"],3),dtype=np.uint8)                 
+                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+
+                plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
+                cv2.imwrite(outDirect+"/EpiTracksA.ppm",epiPolar)   
+                
+            #     plotTracks(OverallImage,idealF.getCurrentL(),interF.getCurrentL())
+            # cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/leftImageGaussianCombined.ppm",OverallImage)
+        
+drawImages(rootDir+"/"+simulationSpeeds[2]+"/"+motionTypes[0])
+
+
+
