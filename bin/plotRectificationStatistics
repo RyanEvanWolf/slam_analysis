@@ -5,24 +5,33 @@ import copy
 import bumblebee.utils as butil
 import matplotlib.pyplot as plt
 import matplotlib.style as sty
+import statistics
 sty.use("seaborn")
 
 
-data=butil.getPickledObject("/home/ryan/DATA_A/jetson_timing.p")
-data2=butil.getPickledObject("/home/ryan/DATA_A/i7_timing.p")
+cals=["$Cal_A$","$Cal_B$","$Cal_C$"]
+calFiles=["DATA_A_calA","DATA_A_calB","DATA_A_calC"]
+i7Col=[(1,0,0),(0,1,0),(0,0,1)]
+for i in range(len(cals)):
+    data=butil.getPickledObject("/home/ryan/"+calFiles[i]+"/jetson_timing.p")
+    data2=butil.getPickledObject("/home/ryan/"+calFiles[i]+"/i7_timing.p")
 
-combined =[]
-combined2=[]
+    combined =[]
+    combined2=[]
 
-for i in range(0,len(data["Debayer"])):
-    combined.append(data["Debayer"][i]+data["Rectification"][i]+data["intRectification"][i])
-    combined2.append(data2["Debayer"][i]+data2["Rectification"][i]+data2["intRectification"][i])
-plt.plot(combined,label="jetson")
-plt.xlabel("image Number")
-plt.ylabel("processing time (ms)")
-plt.title("Combined rectificiation and debayer time")
-plt.plot(combined2,label="i7")
+    for j in range(0,len(data["Debayer"])):
+        combined.append(data["Debayer"][i]+data["Rectification"][j]+data["intRectification"][j])
+        combined2.append(data2["Debayer"][i]+data2["Rectification"][j]+data2["intRectification"][j])
+    plt.hist(combined,label="jetson_"+cals[i],color=i7Col[i],alpha=0.5,bins=25)
+    plt.axvline(statistics.mean(combined),linestyle="--",color=i7Col[i],alpha=0.3)
+    plt.xlabel("Processing Time (ms)")
+    plt.ylabel("Total Images")
+    plt.title("Histogram of the combined rectification and debayer time")
+    plt.hist(combined2,label="i7_"+cals[i],color=i7Col[i],alpha=0.5,bins=25)
+    plt.axvline(statistics.mean(combined2),linestyle="--",color=i7Col[i],alpha=0.7)
 
 
 plt.legend()
+
+plt.savefig("/home/ryan/timing.png",dpi=200)
 plt.show()
