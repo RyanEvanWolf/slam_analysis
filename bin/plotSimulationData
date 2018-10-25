@@ -21,20 +21,83 @@ from bumblebee.motion import getMotion
 import statistics
 import matplotlib.pyplot as plt 
 import matplotlib.patches as mpatches
+import matplotlib.style as sty
+
+
 sty.use("seaborn")
 
 rospy.init_node('motionSimulation')
 rootDir="/media/ryan/EXTRA/output/Simulation"
 simulationSpeeds=["Fast","Medium","Slow"]
-motionTypes=["straight"]
+motionTypes=["straight","turn"]
 cameraSettings=getPickledObject(rootDir+"/camera.p")
 
 #####
 ##get all the files available
 ####
 
+def drawMotionViolin(baseDirectory,motionType="straight"):
+    translation=[]
+    rotation=[]
+    translationColours=[(1,0,0,0.5),(0,1,0,0.5),(0,0,1,0.5)]
+    rotationColours=[(1,0,0,0.5),(0,1,0,0.5),(0,0,1,0.5)]
+    for speedCat in simulationSpeeds:
+        print(baseDirectory+"/"+speedCat)
+        data=getMotionAsList(baseDirectory+"/"+speedCat+"/"+motionType)
+        translation.append((data[0],data[1],data[2]))
+        rotation.append((data[3],data[4],data[5]))
+    fig,(ax1,ax2)=plt.subplots(nrows=2, ncols=1,sharex=True,squeeze=True)
+    print(simulationSpeeds)
+    print(len(simulationSpeeds))
+
+    ax2.set_xticks([1,5,9])
+    ax2.set_xticklabels(simulationSpeeds)
+    ax1.set_ylabel("Translation (m)")
+    ax2.set_ylabel("Rotation (degrees)")
+    for speedCat in range(len(simulationSpeeds)):
+        for catIndex in range(0,3):
+            ###
+            ##draw translation
+            r=ax1.violinplot(translation[speedCat][catIndex],[4*speedCat+catIndex],widths=1,showmeans=False,showextrema=False,showmedians=False)
+            r["bodies"][0].set_facecolor(translationColours[catIndex])
+
+            q1=np.percentile(translation[speedCat][catIndex],0.25)
+            q3=np.percentile(translation[speedCat][catIndex],0.75)
+            avg=np.mean(translation[speedCat][catIndex])
+            dv=np.std(translation[speedCat][catIndex])
+            dvTop=avg+dv
+            dvMin=np.clip(avg-dv,0,avg)
+            ax1.scatter([4*speedCat+catIndex],avg, marker='o', color=(0,0,0,0.3),s=15, zorder=3)
+            ax1.vlines([4*speedCat+catIndex], dvTop, dvMin, color='k', linestyle='-', lw=1)#MAX_VIOLIN_WIDTH/5)
+            ###draw rotation
+            r=ax2.violinplot(rotation[speedCat][catIndex],[4*speedCat+catIndex],widths=1,showmeans=False,showextrema=False,showmedians=False)
+            r["bodies"][0].set_facecolor(rotationColours[catIndex])
+
+            q1=np.percentile(rotation[speedCat][catIndex],0.25)
+            q3=np.percentile(rotation[speedCat][catIndex],0.75)
+            avg=np.mean(rotation[speedCat][catIndex])
+            dv=np.std(rotation[speedCat][catIndex])
+            dvTop=avg+dv
+            dvMin=np.clip(avg-dv,0,avg)
+            ax2.scatter([4*speedCat+catIndex],avg, marker='o', color=(0,0,0,0.3),s=15, zorder=3)
+            ax2.vlines([4*speedCat+catIndex], dvTop, dvMin, color='k', linestyle='-', lw=1)#MAX_VIOLIN_WIDTH/5)
+
+    patch1=[]
+    patch2=[]
+    for speedCat in range(3):
+        patch1.append(mpatches.Patch(color=translationColours[speedCat]))
+        patch2.append(mpatches.Patch(color=rotationColours[speedCat]) )
+    box = ax1.get_position()
+    ax1.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    box = ax2.get_position()
+    ax2.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+    # Put a legend to the right of the current axis
+    ax1.legend(patch1,["X","Y","Z"],loc='center left', bbox_to_anchor=(1, 0.5))
+    ax2.legend(patch2,["Roll","Pitch","Yaw"],loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.savefig(rootDir+"/"+motionType+".png",dpi=300)
 def getMotionAsList(baseDirectory):
     motionFiles=os.listdir(baseDirectory+"/Data")    
+    print(baseDirectory+"/Data")
     x=[]
     y=[]
     z=[]
@@ -42,7 +105,17 @@ def getMotionAsList(baseDirectory):
     p=[]
     yaw=[]
     for motionIndex in motionFiles:
+        print(motionIndex)
         currentFile=getPickledObject(baseDirectory+"/Data/"+motionIndex)
+        diction=getMotion(currentFile.motionEdge)
+        x.append(diction["X"])
+        y.append(diction["Y"])
+        z.append(diction["Z"])
+        r.append(diction["Roll"])
+        p.append(diction["Pitch"])
+        yaw.append(diction["Yaw"])
+    return x,y,z,r,p,yaw
+
 def drawImages(baseDirectory):
     motionFiles=os.listdir(baseDirectory+"/Data")
     
@@ -161,11 +234,14 @@ def drawImages(baseDirectory):
 
                 plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
                 cv2.imwrite(outDirect+"/EpiTracksA.ppm",epiPolar)   
-                
-            #     plotTracks(OverallImage,idealF.getCurrentL(),interF.getCurrentL())
-            # cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/leftImageGaussianCombined.ppm",OverallImage)
-        
-drawImages(rootDir+"/"+simulationSpeeds[2]+"/"+motionTypes[0])
+# for speedName in simulationSpeeds:
+#     print(speedName)
+#     for motion in motionTypes:
+#         print(motion)        
+# drawImages(rootDir+"/"+simulationSpeeds[2]+"/"+motionTypes[0])
+# drawImages(rootDir+"/"+simulationSpeeds[2]+"/"+motionTypes[1])
+drawMotionViolin(rootDir,motionTypes[1])
+drawMotionViolin(rootDir,motionTypes[0])
 
 
-
+plt.show()

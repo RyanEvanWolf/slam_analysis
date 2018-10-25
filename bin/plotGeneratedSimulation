@@ -27,7 +27,7 @@ sty.use("seaborn")
 ############
 
 
-def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
+def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True,minY=0,maxY=5):
     print(len(colours))
     operatingCurves=sorted([int(i) for i in series1.keys()])
     operatingCurves=[str(i) for i in operatingCurves]
@@ -53,6 +53,9 @@ def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
     #################
     ###draw the first set
     fig,(ax1,ax2,ax3)=plt.subplots(nrows=3, ncols=1,sharex=True,squeeze=True)
+    ax1.set_ylim(ymin=minY, ymax=maxY)
+    ax2.set_ylim(ymin=minY, ymax=maxY)
+    ax3.set_ylim(ymin=minY, ymax=maxY)
     print(colours)
     print(keyLabels)
     print(operatingCurves)
@@ -109,7 +112,7 @@ def drawErrorViolin(series1,series2,series3,colours,sortByAlpha=True):
 
     return fig,ax1,ax2,ax3
 
-a=simulationAnalyser("/media/ryan/EXTRA/output/Simulation",extractionMethod="BA")
+a=simulationAnalyser("/media/ryan/EXTRA/output/Simulation",spd="Fast",extractionMethod="PCL",motionType="turn")
 # pclAnalysis=simulationAnalyser("/media/ryan/EXTRA/output/Simulation",extractionMethod="PCL)
 #print(a.getSingleMotionStats(a.getMotionNames()[0]))
 noiseColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(1,0.6,0.4,0.7),(0.7,0.3,0.0,0.7),(0.8,0.2,0,0.7),(1,0,0.7,0.7)]
@@ -118,7 +121,7 @@ data=a.getGroupMotionStats()
 ########
 ##draw the noisy simulation violin
 
-fT,aX,aY,aZ=drawErrorViolin(data["noise"]["X"],data["noise"]["Y"],data["noise"]["Z"],noiseColours)
+fT,aX,aY,aZ=drawErrorViolin(data["noise"]["X"],data["noise"]["Y"],data["noise"]["Z"],noiseColours,minY=0,maxY=20)
 
 aX.set_ylabel("X (mm)")
 aY.set_ylabel("Y (mm)")
