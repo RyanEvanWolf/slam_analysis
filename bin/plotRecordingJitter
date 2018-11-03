@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+import os
+import cv2
+import sys
+
+import time
+
+from datetime import datetime 
+
+import matplotlib.pyplot as plt
+
+
+###common ros messages and imports
+import rospy
+
+import argparse
+
+parser =argparse.ArgumentParser()
+parser.add_argument("rootDatasetImages",
+                    help="Directory to the extracted bayer encoded stereo images",
+                    type=str)
+parser.add_argument("--CalibrationID",help="The calibration ID used to generate the sequence, typicall A,B, or C",default="A")
+args,unknown=parser.parse_known_args()

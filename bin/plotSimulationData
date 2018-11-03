@@ -118,9 +118,6 @@ def getMotionAsList(baseDirectory):
 
 def drawImages(baseDirectory):
     motionFiles=os.listdir(baseDirectory+"/Data")
-    
-
-
     for motionIndex in motionFiles:
         currentFile=getPickledObject(baseDirectory+"/Data/"+motionIndex)
         imageOutputDirectory=baseDirectory+"/Images/"+motionIndex[:-2]
@@ -132,26 +129,26 @@ def drawImages(baseDirectory):
             interF=currentFile.getIdealInterFrameEdge(operatingCurve)
             trackImage=255*np.ones((cameraSettings["height"],
                                     cameraSettings["width"],3),dtype=np.uint8)
-            drawROI(trackImage,cameraSettings["roi"])
+            drawROI(trackImage,ROIfrmMsg(cameraSettings["lInfo"].roi))
             plotTracks(trackImage,interF.getCurrentL(),interF.getPreviousL())
 
             cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/lTracks.ppm",trackImage)
             trackImage1=255*np.ones((cameraSettings["height"],
                                     cameraSettings["width"],3),dtype=np.uint8)
-            drawROI(trackImage1,cameraSettings["roi"])
+            drawROI(trackImage1,ROIfrmMsg(cameraSettings["rInfo"].roi))
             plotTracks(trackImage1,interF.getCurrentR(),interF.getPreviousR())
             cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/rTracks.ppm",trackImage1)
             
             
             epiPolar=255*np.ones((cameraSettings["height"],
                                     2*cameraSettings["width"],3),dtype=np.uint8)                 
-            drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+            drawStereoROI(epiPolar,ROIfrmMsg(cameraSettings["lInfo"].roi),ROIfrmMsg(cameraSettings["rInfo"].roi))
 
             plotEpiPolar(epiPolar,interF.getCurrentL(),interF.getCurrentR())
             cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/EpiTracksB.ppm",epiPolar)
             epiPolar=255*np.ones((cameraSettings["height"],
                                     2*cameraSettings["width"],3),dtype=np.uint8)                 
-            drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+            drawStereoROI(epiPolar,ROIfrmMsg(cameraSettings["lInfo"].roi),ROIfrmMsg(cameraSettings["rInfo"].roi))
 
             plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
             cv2.imwrite(imageOutputDirectory+"/"+operatingCurve.zfill(3)+"_IDEAL/EpiTracksA.ppm",epiPolar)
@@ -163,7 +160,7 @@ def drawImages(baseDirectory):
             idealF=currentFile.getIdealInterFrameEdge(operatingCurve)
             OverallImage=255*np.ones((cameraSettings["height"],
                                     cameraSettings["width"],3),dtype=np.uint8)
-            drawROI(OverallImage,cameraSettings["roi"])
+            drawROI(OverallImage,ROIfrmMsg(cameraSettings["lInfo"].roi))
             for noise in noiseLevels:
                 outDirect=imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/Gaussian_"+noise
                 createDir(outDirect)
@@ -171,26 +168,26 @@ def drawImages(baseDirectory):
                 interF=currentFile.getNoisyInterFrameEdge(operatingCurve,noise)
                 trackImage=255*np.ones((cameraSettings["height"],
                                         cameraSettings["width"],3),dtype=np.uint8)
-                drawROI(trackImage,cameraSettings["roi"])
+                drawROI(trackImage,ROIfrmMsg(cameraSettings["lInfo"].roi))
                 plotTracks(trackImage,interF.getCurrentL(),interF.getPreviousL())
 
                 cv2.imwrite(outDirect+"/lTracks.ppm",trackImage)
                 trackImage1=255*np.ones((cameraSettings["height"],
                                         cameraSettings["width"],3),dtype=np.uint8)
-                drawROI(trackImage1,cameraSettings["roi"])
+                drawROI(trackImage,ROIfrmMsg(cameraSettings["rInfo"].roi))
                 plotTracks(trackImage1,interF.getCurrentR(),interF.getPreviousR())
                 cv2.imwrite(outDirect+"/rTracks.ppm",trackImage1)
                 
                 
                 epiPolar=255*np.ones((cameraSettings["height"],
                                         2*cameraSettings["width"],3),dtype=np.uint8)                 
-                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+                drawStereoROI(epiPolar,ROIfrmMsg(cameraSettings["lInfo"].roi),ROIfrmMsg(cameraSettings["rInfo"].roi))
 
                 plotEpiPolar(epiPolar,interF.getCurrentL(),interF.getCurrentR())
                 cv2.imwrite(outDirect+"/EpiTracksB.ppm",epiPolar)
                 epiPolar=255*np.ones((cameraSettings["height"],
                                         2*cameraSettings["width"],3),dtype=np.uint8)                 
-                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+                drawStereoROI(epiPolar,ROIfrmMsg(cameraSettings["lInfo"].roi),ROIfrmMsg(cameraSettings["rInfo"].roi))
 
                 plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
                 cv2.imwrite(outDirect+"/EpiTracksA.ppm",epiPolar)   
@@ -204,7 +201,7 @@ def drawImages(baseDirectory):
             idealF=currentFile.getIdealInterFrameEdge(operatingCurve)
             OverallImage=255*np.ones((cameraSettings["height"],
                                     cameraSettings["width"],3),dtype=np.uint8)
-            drawROI(OverallImage,cameraSettings["roi"])
+            drawROI(OverallImage,ROIfrmMsg(cameraSettings["lInfo"]))
             for out in currentFile.OperatingCurves[operatingCurve][1].keys():
                 print(operatingCurve,out,len(currentFile.OperatingCurves[operatingCurve][0]),len(currentFile.OperatingCurves[operatingCurve][1][out]))
                 outDirect=imageOutputDirectory+"/"+operatingCurve.zfill(3)+"/outlier_"+out
@@ -212,34 +209,33 @@ def drawImages(baseDirectory):
                 interF=currentFile.getOutlierInterFrameEdge(operatingCurve,out)
                 trackImage=255*np.ones((cameraSettings["height"],
                                         cameraSettings["width"],3),dtype=np.uint8)
-                drawROI(trackImage,cameraSettings["roi"])
+                drawROI(trackImage,ROIfrmMsg(cameraSettings["lInfo"].roi))
                 plotTracks(trackImage,interF.getCurrentL(),interF.getPreviousL())                
                 cv2.imwrite(outDirect+"/lTracks.ppm",trackImage)
                 trackImage1=255*np.ones((cameraSettings["height"],
                                         cameraSettings["width"],3),dtype=np.uint8)
-                drawROI(trackImage1,cameraSettings["roi"])
+                drawROI(trackImage1,ROIfrmMsg(cameraSettings["rInfo"].roi))
                 plotTracks(trackImage1,interF.getCurrentR(),interF.getPreviousR())
                 cv2.imwrite(outDirect+"/rTracks.ppm",trackImage1)
                 
                 
                 epiPolar=255*np.ones((cameraSettings["height"],
                                         2*cameraSettings["width"],3),dtype=np.uint8)                 
-                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+                drawStereoROI(epiPolar,ROIfrmMsg(cameraSettings["lInfo"].roi),ROIfrmMsg(cameraSettings["rInfo"].roi))
 
                 plotEpiPolar(epiPolar,interF.getCurrentL(),interF.getCurrentR())
                 cv2.imwrite(outDirect+"/EpiTracksB.ppm",epiPolar)
                 epiPolar=255*np.ones((cameraSettings["height"],
                                         2*cameraSettings["width"],3),dtype=np.uint8)                 
-                drawStereoROI(epiPolar,cameraSettings["roi"],cameraSettings["roi"])
+                drawStereoROI(epiPolar,ROIfrmMsg(cameraSettings["lInfo"].roi),ROIfrmMsg(cameraSettings["rInfo"].roi))
 
                 plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
                 cv2.imwrite(outDirect+"/EpiTracksA.ppm",epiPolar)   
-# for speedName in simulationSpeeds:
-#     print(speedName)
-#     for motion in motionTypes:
-#         print(motion)        
-# drawImages(rootDir+"/"+simulationSpeeds[2]+"/"+motionTypes[0])
-# drawImages(rootDir+"/"+simulationSpeeds[2]+"/"+motionTypes[1])
+for speedName in simulationSpeeds:
+    print(speedName)
+    for motion in motionTypes:
+        print(motion)        
+        drawImages(rootDir+"/"+speedName+"/"+motion)
 drawMotionViolin(rootDir,motionTypes[1])
 drawMotionViolin(rootDir,motionTypes[0])
 
