@@ -23,7 +23,10 @@ filteredOut=["filteredOutputA","filteredOutputB","filteredOutputC"]
 keyNames=["$Cal_A$","$Cal_B$","$Cal_C$"]
 colours=[(1,0,0),(0,1,0),(0,0,1)]
 
-
+import matplotlib as mpl
+label_size = 18
+mpl.rcParams['xtick.labelsize'] = label_size 
+mpl.rcParams['ytick.labelsize'] = label_size 
 
 ##########################
 ###Get the initial RMS error and draw the threshold values on it
@@ -35,23 +38,23 @@ for j in range(len(unfilteredData.LeftPoints)):
 
 fig, ax1 = plt.subplots()
 y, x, _ =ax1.hist(intialRMS,25,color=(0,0,0),alpha=0.4,edgecolor=(0,0,0))
-ax1.set_xlabel("Unfiltered combined RMS error")
-ax1.set_ylabel("Total Images")
+ax1.set_xlabel("Unfiltered RMS error",fontsize=18)
+ax1.set_ylabel("Total Images",fontsize=18)
 
 ax2=ax1.twinx()
 mu,sigma = norm.fit(intialRMS)
 x_pdf = np.linspace(0,np.max(intialRMS), 100)
 y_pdf=norm.pdf(x_pdf, mu, sigma)
 ax2.plot(x_pdf,y_pdf,color=(0,0,0),linestyle='dashed')
-ax2.set_ylabel('Probability Density Function')
+ax2.set_ylabel('Probability Density Function',fontsize=18)
 ax2.grid(False)
 ax1.axvline(x=1.0, linestyle='--',color=(1,0,0),label="$T_{Calibration}=1.0$")
 ax1.axvline(x=1.1, linestyle='--',color=(0,1,0),label="$T_{Calibration}=1.1$")
 ax1.axvline(x=1.2, linestyle='--',color=(0,0,1),label="$T_{Calibration}=1.2$")
 
-ax1.legend()
+ax1.legend(fontsize=20)
 
-fig.savefig("/home/ryan/InputErrorFigure.png",format='png',dpi=200)
+fig.savefig("/home/ryan/InputErrorFigure.png",format='png',bbox_inches='tight')
 #####################
 ###get the stereo input for each thresholded calibration and plot them on the same Image
 

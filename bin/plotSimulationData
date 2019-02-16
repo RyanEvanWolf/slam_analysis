@@ -105,12 +105,17 @@ def getMotionAsList(baseDirectory):
     p=[]
     yaw=[]
     for motionIndex in motionFiles:
-        print(motionIndex)
-        currentFile=getPickledObject(baseDirectory+"/Data/"+motionIndex)
-        diction=getMotion(currentFile.motionEdge)
-        x.append(diction["X"])
-        y.append(diction["Y"])
-        z.append(diction["Z"])
+        # print(motionIndex)
+        with open(baseDirectory+"/Data/"+motionIndex) as data_file:
+            data_loaded = msgpack.unpack(data_file)
+            currentFile = simulatedDataFrame()
+            currentFile.deserializeFrame(data_loaded)
+            print(currentFile.idealMotion)
+            diction=getxPoseFormatted(currentFile.idealMotion)
+        print(diction)
+        x.append(diction["C"][0])
+        y.append(diction["C"][1])
+        z.append(diction["C"][2])
         r.append(diction["Roll"])
         p.append(diction["Pitch"])
         yaw.append(diction["Yaw"])
@@ -231,12 +236,12 @@ def drawImages(baseDirectory):
 
                 plotEpiPolar(epiPolar,interF.getPreviousL(),interF.getPreviousR())
                 cv2.imwrite(outDirect+"/EpiTracksA.ppm",epiPolar)   
-for speedName in simulationSpeeds:
-    print(speedName)
-    for motion in motionTypes:
-        print(motion)        
-        drawImages(rootDir+"/"+speedName+"/"+motion)
-drawMotionViolin(rootDir,motionTypes[1])
+# for speedName in simulationSpeeds:
+#     print(speedName)
+#     for motion in motionTypes:
+#         print(motion)        
+#         drawImages(rootDir+"/"+speedName+"/"+motion)
+#drawMotionViolin(rootDir,motionTypes[1])
 drawMotionViolin(rootDir,motionTypes[0])
 
 

@@ -4,34 +4,59 @@ import argparse
 import copy
 import bumblebee.utils as butil
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.style as sty
 import statistics
 sty.use("seaborn")
+mpl.rc('xtick',labelsize=12)
+mpl.rc('ytick',labelsize=12)
+data=butil.getPickledObject("/home/ryan/DATA_A_calB/jetson_timing.p")
+data2=butil.getPickledObject("/home/ryan/DATA_A_calB/i7_timing.p")
 
+combined =[]
+combined2=[]
 
-cals=["$Cal_A$","$Cal_B$","$Cal_C$"]
-calFiles=["DATA_A_calA","DATA_A_calB","DATA_A_calC"]
-i7Col=[(1,0,0),(0,1,0),(0,0,1)]
-for i in range(len(cals)):
-    data=butil.getPickledObject("/home/ryan/"+calFiles[i]+"/jetson_timing.p")
-    data2=butil.getPickledObject("/home/ryan/"+calFiles[i]+"/i7_timing.p")
-
-    combined =[]
-    combined2=[]
-
-    for j in range(0,len(data["Debayer"])):
-        combined.append(data["Debayer"][i]+data["Rectification"][j]+data["intRectification"][j])
-        combined2.append(data2["Debayer"][i]+data2["Rectification"][j]+data2["intRectification"][j])
-    plt.hist(combined,label="jetson_"+cals[i],color=i7Col[i],alpha=0.5,bins=25)
-    plt.axvline(statistics.mean(combined),linestyle="--",color=i7Col[i],alpha=0.3)
-    plt.xlabel("Processing Time (ms)")
-    plt.ylabel("Total Images")
-    plt.title("Histogram of the combined rectification and debayer time")
-    plt.hist(combined2,label="i7_"+cals[i],color=i7Col[i],alpha=0.5,bins=25)
-    plt.axvline(statistics.mean(combined2),linestyle="--",color=i7Col[i],alpha=0.7)
-
+for j in range(0,len(data["Debayer"])):
+    combined.append(data["Debayer"][0]+data["Rectification"][j]+data["intRectification"][j])
+    combined2.append(data2["Debayer"][0]+data2["Rectification"][j]+data2["intRectification"][j])
+plt.hist(combined,label="Jetson TK1",color=(0,1,0),alpha=0.8,bins=25)
+plt.axvline(statistics.mean(combined),linestyle="--",color=(0,0,0),alpha=0.9)
+plt.xlabel("Processing Time (ms)",fontsize=16)
+plt.ylabel("Total Images",fontsize=16)
+plt.title("Histogram of the combined rectification and debayer time",fontsize=20)
+plt.hist(combined2,label="i7",color=(0,1,1),alpha=0.9,bins=25)
+plt.axvline(statistics.mean(combined2),linestyle="--",color=(0,0,0),alpha=0.9)
 
 plt.legend()
 
-plt.savefig("/home/ryan/timing.png",dpi=200)
+plt.savefig("/home/ryan/timing.png",dpi=100)
 plt.show()
+
+
+# #cals=["$Cal_A$","$Cal_B$","$Cal_C$"]
+
+# #calFiles=["DATA_A_calA","DATA_A_calB","DATA_A_calC"]
+# i7Col=[(1,0,0),(0,1,0),(0,0,1)]
+# for i in range(len(cals)):
+#     data=butil.getPickledObject("/home/ryan/"+calFiles[i]+"/jetson_timing.p")
+#     data2=butil.getPickledObject("/home/ryan/"+calFiles[i]+"/i7_timing.p")
+
+#     combined =[]
+#     combined2=[]
+
+#     for j in range(0,len(data["Debayer"])):
+#         combined.append(data["Debayer"][i]+data["Rectification"][j]+data["intRectification"][j])
+#         combined2.append(data2["Debayer"][i]+data2["Rectification"][j]+data2["intRectification"][j])
+#     plt.hist(combined,label="jetson_"+cals[i],color=i7Col[i],alpha=0.5,bins=25)
+#     plt.axvline(statistics.mean(combined),linestyle="--",color=i7Col[i],alpha=0.3)
+#     plt.xlabel("Processing Time (ms)")
+#     plt.ylabel("Total Images")
+#     plt.title("Histogram of the combined rectification and debayer time")
+#     plt.hist(combined2,label="i7_"+cals[i],color=i7Col[i],alpha=0.5,bins=25)
+#     plt.axvline(statistics.mean(combined2),linestyle="--",color=i7Col[i],alpha=0.7)
+
+
+# plt.legend()
+
+# plt.savefig("/home/ryan/timing.png",dpi=200)
+# plt.show()

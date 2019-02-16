@@ -2,7 +2,6 @@
 
 
 import pickle
-from front_end.motion import *
 import numpy as np
 import matplotlib.pyplot as plt 
 import matplotlib.patches as mpatches
@@ -10,12 +9,12 @@ import matplotlib.patches as mpatches
 import copy
 
 
-from front_end.motion import *
+from bumblebee.motion import *
 from front_end.analysis import simulationAnalyser
 import bumblebee.utils as butil
 import argparse
 import matplotlib.style as sty
-from front_end.simulation import *
+from dataset.simulation import *
 import os
 import statistics
 sty.use("seaborn")
@@ -123,68 +122,126 @@ args,unknown=parser.parse_known_args()
 speeds=["Fast","Medium","Slow"]
 motType=["straight","turn"]
 
-for s in speeds:
-    for mot in motType:
 
-        figOutDir=args.root_dir +"/analysis/"+args.extractType
-        butil.createDir(figOutDir)
-        a=simulationAnalyser(args.root_dir,spd=s,extractionMethod=args.extractType,motionType=mot)
-# # pclAnalysis=simulationAnalyser("/media/ryan/EXTRA/output/Simulation",extractionMethod="PCL"
-# #print(a.getSingleMotionStats(a.getMotionNames()[0]))
-        noiseColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(1,0.6,0.4,0.7),(0.7,0.3,0.0,0.7),(0.8,0.2,0,0.7),(1,0,0.7,0.7)]
-        data=a.getGroupMotionStats()
-# ##############
-# ########
-# ##draw the noisy simulation violin
 
-        fT,aX,aY,aZ=drawErrorViolin(data["noise"]["X"],data["noise"]["Y"],data["noise"]["Z"],noiseColours,minY=0,maxY=20)
+current = simulationAnalyser(args.root_dir)
 
-        aX.set_ylabel("X (mm)")
-        aY.set_ylabel("Y (mm)")
-        aZ.set_ylabel("Z (mm)")
+current.generateMotionScatter("40","gaussian","0.25")
+idealXVals=current.getIdealMotionX("Slow")
 
-        aZ.set_xlabel("Number of Features")
 
-        fT.suptitle("Absolute Translation Error")
+# Rx=[getL2Formatted(getxPoseFormatted(x,True))[0] for x in idealXVals]
+# Rtheta=[getL2Formatted(getxPoseFormatted(x,True))[1] for x in idealXVals]
 
-        fT.savefig(figOutDir+"/"+s+"_"+mot+"_translation_gaussian.png",dpi=200)
-        fR,aR,aP,aY=drawErrorViolin(data["noise"]["Roll"],data["noise"]["Pitch"],data["noise"]["Yaw"],noiseColours)
 
-        aR.set_ylabel("Roll (degrees)")
-        aP.set_ylabel("Pitch (degress)")
-        aY.set_ylabel("Yaw (degress)")
+# plt.scatter(Rtheta,Rx,s=1,c=(0,0,0,1))
 
-        aY.set_xlabel("Number of Features")
+# idealXVals=current.getIdealMotionX("Medium")
 
-        fR.suptitle("Absolute Rotation Error")
-        fR.savefig(figOutDir+"/"+s+"_"+mot+"_Rotation_guassian.png",dpi=200)
-        # ##############################
-        # ###draw the outlier 
-        # #############################
+# Rx=[getL2Formatted(getxPoseFormatted(x,True))[0] for x in idealXVals]
+# Rtheta=[getL2Formatted(getxPoseFormatted(x,True))[1] for x in idealXVals]
 
-        outlierColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(0.7,0.3,0.0,0.7),(1,0,0.7,0.7)]
+# plt.scatter(Rtheta,Rx,s=1,c=(0,0,0,1))
+# idealXVals=current.getIdealMotionX("Fast")
 
-        fTo,aXo,aYo,aZo=drawErrorViolin(data["outlier"]["X"],data["outlier"]["Y"],data["outlier"]["Z"],outlierColours,False,minY=0,maxY=20)
+# Rx=[getL2Formatted(getxPoseFormatted(x,True))[0] for x in idealXVals]
+# Rtheta=[getL2Formatted(getxPoseFormatted(x,True))[1] for x in idealXVals]
 
-        aXo.set_ylabel("X (mm)")
-        aYo.set_ylabel("Y (mm)")
-        aZo.set_ylabel("Z (mm)")
+# plt.scatter(Rtheta,Rx,s=1,c=(0,0,0,1))
+plt.show()
 
-        aZo.set_xlabel("Number of Features")
 
-        fTo.suptitle("Absolute Translation Error")
-        fTo.savefig(figOutDir+"/"+s+"_"+mot+"_translation_outlier.png",dpi=200)
 
-        fRo,aRo,aPo,aYo=drawErrorViolin(data["outlier"]["Roll"],data["outlier"]["Pitch"],data["outlier"]["Yaw"],outlierColours,False)
 
-        aRo.set_ylabel("Roll (degrees)")
-        aPo.set_ylabel("Pitch (degress)")
-        aYo.set_ylabel("Yaw (degress)")
 
-        aYo.set_xlabel("Number of Features")
 
-        fRo.suptitle("Absolute Rotation Error")
-        fRo.savefig(figOutDir+"/"+s+"_"+mot+"_Rotation_outlier.png",dpi=200)
+# outlierXVals=current.getOutlierMotionX("Slow","40","20")
+# gaussianXVals=current.getGaussianMotionX("Slow","40","0.25")
+# eT=[]
+# eR=[]
+# e1T=[]
+# e1R=[]
+# for i in range(0,len(idealXVals)):
+#     t,r=getL2Formatted(getxPoseFormatted(idealXVals[i]-outlierXVals[i],True))
+#     eT.append(t)
+#     eR.append(r)
+#     # e=idealXVals[i]-outlierXVals[i]
+#     # e1=idealXVals[i]-gaussianXVals[i]
+#     # form=getxPoseFormatted(e,True)
+#     # form1=getxPoseFormatted(e1,True)
+#     # eT.append(np.sqrt((form["C"]**2).sum()))
+#     # eR.append(np.sqrt(form["Roll"]**2 +form["Yaw"]**2 +form["Pitch"]**2))
+#     # e1T.append(np.sqrt((form1["C"]**2).sum()))
+#     # e1R.append(np.sqrt(form1["Roll"]**2 +form1["Yaw"]**2 +form1["Pitch"]**2))
+
+# ax1.plot(eT,"r")
+# #plt.plot(e1T,"r")
+# ax1.plot(eR,"b")
+# #plt.plot(e1R,"b")
+# plt.show()
+
+# current.generateGrossFailure()
+# for s in ["Slow"]:#speeds:
+#     for mot in ["straight"]:#motType:
+
+#         figOutDir=args.root_dir +"/analysis/"+args.extractType
+#         butil.createDir(figOutDir)
+#         a=simulationAnalyser(args.root_dir,spd=s,extractionMethod=args.extractType,motionType=mot)
+
+#         noiseColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(1,0.6,0.4,0.7),(0.7,0.3,0.0,0.7),(0.8,0.2,0,0.7),(1,0,0.7,0.7)]
+#         data=a.getGroupMotionStats()
+# # ##############
+# # ########
+# # ##draw the noisy simulation violin
+
+#         fT,aX,aY,aZ=drawErrorViolin(data["noise"]["X"],data["noise"]["Y"],data["noise"]["Z"],noiseColours,minY=0,maxY=20)
+
+#         aX.set_ylabel("X (mm)")
+#         aY.set_ylabel("Y (mm)")
+#         aZ.set_ylabel("Z (mm)")
+
+#         aZ.set_xlabel("Number of Features")
+
+#         fT.suptitle("Absolute Translation Error")
+
+#         fT.savefig(figOutDir+"/"+s+"_"+mot+"_translation_gaussian.png",dpi=200)
+#         fR,aR,aP,aY=drawErrorViolin(data["noise"]["Roll"],data["noise"]["Pitch"],data["noise"]["Yaw"],noiseColours)
+
+#         aR.set_ylabel("Roll (degrees)")
+#         aP.set_ylabel("Pitch (degress)")
+#         aY.set_ylabel("Yaw (degress)")
+
+#         aY.set_xlabel("Number of Features")
+
+#         fR.suptitle("Absolute Rotation Error")
+#         fR.savefig(figOutDir+"/"+s+"_"+mot+"_Rotation_guassian.png",dpi=200)
+#         # ##############################
+#         # ###draw the outlier 
+#         # #############################
+
+#         outlierColours=[(0,0.8,0.2,0.7),(0.3,0.7,0.1,0.7),(0.4,0.6,0,0.7),(0.5,0.5,0,0.7),(0.7,0.3,0.0,0.7),(1,0,0.7,0.7)]
+
+#         fTo,aXo,aYo,aZo=drawErrorViolin(data["outlier"]["X"],data["outlier"]["Y"],data["outlier"]["Z"],outlierColours,False,minY=0,maxY=20)
+
+#         aXo.set_ylabel("X (mm)")
+#         aYo.set_ylabel("Y (mm)")
+#         aZo.set_ylabel("Z (mm)")
+
+#         aZo.set_xlabel("Number of Features")
+
+#         fTo.suptitle("Absolute Translation Error")
+#         fTo.savefig(figOutDir+"/"+s+"_"+mot+"_translation_outlier.png",dpi=200)
+
+#         fRo,aRo,aPo,aYo=drawErrorViolin(data["outlier"]["Roll"],data["outlier"]["Pitch"],data["outlier"]["Yaw"],outlierColours,False)
+
+#         aRo.set_ylabel("Roll (degrees)")
+#         aPo.set_ylabel("Pitch (degress)")
+#         aYo.set_ylabel("Yaw (degress)")
+
+#         aYo.set_xlabel("Number of Features")
+
+#         fRo.suptitle("Absolute Rotation Error")
+#         fRo.savefig(figOutDir+"/"+s+"_"+mot+"_Rotation_outlier.png",dpi=200)
 
 
 
